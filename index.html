@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小林モータース ポータル</title>
+<style>
+:root{
+  --bg:#0c0e14;--panel:#161a23;--card:#1b1f29;--sec:#232836;--selrow:#26314a;
+  --bd:rgba(255,255,255,.08);--bd2:rgba(255,255,255,.16);
+  --t1:#e8eaf0;--t2:#9aa3b2;--t3:#6b7280;
+  --car:#378ADD;--stock:#7c3aed;--pit:#1db97a;--admin:#e0b56a;--danger:#f0999b;
+}
+*{margin:0;box-sizing:border-box}
+body{background:var(--bg);color:var(--t1);font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic Medium","Meiryo",sans-serif;min-height:100vh;position:relative;font-size:14px;line-height:1.6}
+button{font-family:inherit;cursor:pointer}
+input,select{font-family:inherit;background:#0e1117;color:var(--t1);border:1px solid var(--bd2);border-radius:6px;padding:7px 9px;font-size:13px;width:100%}
+.sub{color:var(--t2)}.ter{color:var(--t3)}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block;flex:none}
+.tbtn{background:var(--sec);color:var(--t1);border:1px solid var(--bd2);border-radius:7px;padding:6px 11px;font-size:12px}
+.savebtn{background:var(--selrow);color:var(--t1);border:1px solid var(--bd2);border-radius:7px;padding:6px 12px;font-size:13px}
+.addbtn{background:var(--sec);color:var(--t1);border:1px solid var(--bd2);border-radius:7px;padding:6px 11px;font-size:12px}
+.delbtn{background:transparent;color:var(--danger);border:1px solid rgba(240,153,155,.4);border-radius:7px;padding:6px 12px;font-size:13px}
+
+/* ログイン / 権限なし */
+#login,#denied{position:fixed;inset:0;z-index:20;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg);padding:20px;text-align:center}
+#denied{display:none}
+.lcard{max-width:380px;width:100%}
+.lname{font-weight:800;font-size:22px;margin-top:14px}
+.lsub{font-size:11px;letter-spacing:5px;color:var(--t2);margin-top:4px}
+.gbtn{margin-top:30px;background:#fff;color:#222;border:none;border-radius:10px;padding:12px 22px;font-size:14px;font-weight:700;display:inline-flex;align-items:center;gap:10px}
+.gg{width:18px;height:18px;border-radius:50%;background:#4285F4;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.lnote{font-size:11px;color:#5f6675;margin-top:18px;line-height:1.6}
+#login-msg{color:var(--danger);font-weight:600;font-size:12px;margin-top:14px;min-height:16px}
+
+/* ふくらむ色（TOP） */
+#flood{position:fixed;left:0;top:0;width:170px;height:170px;border-radius:50%;background:var(--fc,#333);opacity:0;transform:translate(-50%,-50%) scale(0);transition:transform .55s cubic-bezier(.22,.61,.36,1),opacity .35s;pointer-events:none;z-index:1}
+body.flooding #flood{}
+
+#portal{display:none}
+#portal.show{display:block}
+.pbar{position:fixed;top:14px;right:16px;z-index:5;display:flex;align-items:center;gap:10px}
+.uchip{font-size:12px;color:var(--t2);display:inline-flex;align-items:center;gap:7px}
+.uav{width:24px;height:24px;border-radius:50%;background:var(--selrow);color:#cdd6f4;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:600;overflow:hidden}
+.uav img{width:100%;height:100%;object-fit:cover}
+.gear{width:38px;height:38px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid var(--bd2);color:#cfd6e2;font-size:16px;display:flex;align-items:center;justify-content:center;text-decoration:none}
+.gear:hover{background:rgba(255,255,255,.12)}
+
+/* TOP（エコシステム） */
+#view-top{position:relative}
+#stage{position:relative;z-index:2;width:min(82vw,84vh,640px);aspect-ratio:1;margin:8vh auto 0}
+.ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:84%;height:84%;border:1px solid rgba(255,255,255,.09);border-radius:50%;transition:opacity .3s}
+#center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:210px;transition:opacity .3s}
+.cname{font-weight:800;font-size:19px;margin-top:8px}.csub{font-size:10px;letter-spacing:4px;color:var(--t2);margin-top:3px}
+.node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;background:none;border:none;color:inherit;width:120px;transition:opacity .3s}
+.node .ic{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:27px;transition:transform .2s,box-shadow .2s;background:var(--c)}
+.node .lb{font-size:13px;font-weight:600;white-space:nowrap}
+.node:hover .ic,.node.hot .ic{transform:scale(1.13);box-shadow:0 0 30px var(--c)}
+.node.soon{cursor:default}.node.soon .ic{filter:grayscale(.45);opacity:.85}.node.soon .lb{color:var(--t2)}
+.badge{font-size:10px;color:#cdd3df;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:1px 8px}
+.shake{animation:shk .4s}@keyframes shk{0%,100%{transform:translate(-50%,-50%)}25%{transform:translate(-54%,-50%)}75%{transform:translate(-46%,-50%)}}
+body.flooding .node:not(.hot){opacity:.18}body.flooding #center{opacity:.22}body.flooding .ring{opacity:0}
+.foot{position:fixed;bottom:18px;left:0;right:0;text-align:center;font-size:11px;letter-spacing:1.5px;color:var(--t3);z-index:3}
+#enterLabel{position:fixed;inset:0;z-index:4;display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;pointer-events:none}
+body.entering #enterLabel{display:flex}
+#enterLabel .ic{width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:42px;margin-bottom:16px}
+#enterLabel .nm{font-size:24px;font-weight:800}#enterLabel .go{font-size:12px;color:rgba(255,255,255,.8);margin-top:8px;letter-spacing:2px}
+#toast{position:fixed;bottom:62px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.72);border:1px solid var(--bd2);color:#fff;font-size:13px;padding:8px 16px;border-radius:20px;z-index:6;opacity:0;transition:opacity .25s;pointer-events:none}
+#toast.show{opacity:1}
+
+/* メンバー管理ビュー */
+#view-admin{display:none;max-width:920px;margin:0 auto;padding:64px 16px 60px}
+.av{border-radius:50%;background:var(--selrow);color:#cdd6f4;display:flex;align-items:center;justify-content:center;font-weight:600;flex:none}
+.av img{width:100%;height:100%;object-fit:cover;display:block}
+.card{background:var(--card);border:1px solid var(--bd);border-radius:14px}
+.sec{background:var(--sec);border-radius:9px;padding:12px}
+table{width:100%;border-collapse:collapse;table-layout:fixed}
+th,td{border-bottom:1px solid rgba(255,255,255,.06);padding:9px 8px;text-align:left;vertical-align:top;font-size:13px}
+.row{cursor:pointer}.row:hover{background:var(--sec)}.row.sel{background:var(--selrow)}
+.lbl{color:var(--t2);font-size:12px;display:block;margin-bottom:3px}
+.banner{background:rgba(224,181,106,.12);border:1px solid rgba(224,181,106,.35);color:#e9c48a;border-radius:9px;padding:9px 12px;font-size:12px;margin-bottom:14px}
+.sectitle{display:flex;align-items:center;gap:8px;margin:8px 2px 12px}
+.backlink{display:inline-flex;align-items:center;gap:6px;color:var(--t2);font-size:13px;cursor:pointer;background:none;border:none;margin-bottom:10px}
+
+/* クロッパー */
+#modal-crop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:60;padding:16px}
+#modal-crop.open{display:flex}
+.crop-box{background:var(--card);border:1px solid var(--bd);border-radius:14px;width:360px;max-width:96vw;overflow:hidden}
+.crop-hd{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--bd)}
+.crop-area{position:relative;width:300px;height:300px;margin:0 auto;overflow:hidden;background:#000;border-radius:10px;cursor:grab;user-select:none;touch-action:none}
+.crop-area.dragging{cursor:grabbing}
+.crop-area img{position:absolute;left:50%;top:50%;transform-origin:center;pointer-events:none;max-width:none;display:block}
+.crop-svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.crop-ft{display:flex;justify-content:flex-end;gap:8px;padding:12px 14px;border-top:1px solid var(--bd)}
+@media (max-width:680px){
+  #stage{width:auto;aspect-ratio:auto;margin:64px 16px 16px;display:flex;flex-direction:column;gap:9px}
+  .ring{display:none}#center{position:static;transform:none;width:auto;margin:6px auto 16px}
+  .node{position:static!important;transform:none!important;flex-direction:row;width:100%;justify-content:flex-start;gap:14px;background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:14px;padding:11px 14px}
+  .node .ic{width:44px;height:44px;font-size:21px}
+  body.flooding .node:not(.hot){opacity:1}body.flooding #center{opacity:1}
+}
+</style>
+</head>
+<body>
+<div id="flood"></div>
+
+<div id="login">
+  <div class="lcard">
+    <svg width="64" height="64" viewBox="0 0 56 56" style="display:block;margin:0 auto">
+      <circle cx="28" cy="28" r="22" fill="none" stroke="#fff" stroke-width="2" opacity=".22"/><circle cx="28" cy="28" r="7" fill="#fff"/>
+      <circle cx="28" cy="6.5" r="3.2" fill="#fff" opacity=".85"/><circle cx="49.5" cy="28" r="3.2" fill="#fff" opacity=".85"/>
+      <circle cx="28" cy="49.5" r="3.2" fill="#fff" opacity=".85"/><circle cx="6.5" cy="28" r="3.2" fill="#fff" opacity=".85"/>
+    </svg>
+    <div class="lname">小林モータース</div><div class="lsub">P O R T A L</div>
+    <button class="gbtn" onclick="loginWithGoogle()"><span class="gg">G</span> Google でログイン</button>
+    <div class="lnote">会社の Google アカウントでログインしてください。</div>
+    <div id="login-msg"></div>
+  </div>
+</div>
+
+<div id="denied">
+  <div class="lcard">
+    <div style="font-size:40px">🔒</div>
+    <div class="lname" style="font-size:18px;margin-top:10px">権限がありません</div>
+    <div class="lnote">このアカウントはポータル管理に入れません。会社のアカウントでログインし直してください。</div>
+    <button class="tbtn" style="margin-top:18px" onclick="doLogout()">ログアウト</button>
+  </div>
+</div>
+
+<div id="portal">
+  <div class="pbar">
+    <span class="uchip"><span class="uav" id="u-av"></span><span id="u-name"></span></span>
+    <a class="gear" id="gear-admin" href="javascript:void(0)" onclick="showView('admin')" title="メンバー管理">⚙</a>
+    <button class="tbtn" onclick="doLogout()">ログアウト</button>
+  </div>
+
+  <div id="view-top">
+    <div id="stage">
+      <div class="ring"></div>
+      <div id="center">
+        <svg width="58" height="58" viewBox="0 0 56 56" style="display:block;margin:0 auto">
+          <circle cx="28" cy="28" r="22" fill="none" stroke="#fff" stroke-width="2" opacity=".22"/><circle cx="28" cy="28" r="7" fill="#fff"/>
+          <circle cx="28" cy="6.5" r="3.2" fill="#fff" opacity=".85"/><circle cx="49.5" cy="28" r="3.2" fill="#fff" opacity=".85"/>
+          <circle cx="28" cy="49.5" r="3.2" fill="#fff" opacity=".85"/><circle cx="6.5" cy="28" r="3.2" fill="#fff" opacity=".85"/>
+        </svg>
+        <div class="cname">小林モータース</div><div class="csub">P O R T A L</div>
+      </div>
+    </div>
+    <div class="foot">小林モータース ECOSYSTEM ・ アイコンにホバー → クリックでアプリへ</div>
+  </div>
+
+  <div id="view-admin">
+    <button class="backlink" onclick="showView('top')">‹ ポータルTOPに戻る</button>
+    <div class="banner">⚠ このメンバー管理は試作表示です（実データ保存は次の段階で接続します）。編集はこの画面内のみ反映され、再読み込みで戻ります。</div>
+    <div class="sectitle"><span style="font-weight:700">👥 メンバー管理</span><span class="ter" style="font-size:12px">人と権限はすべてここで設定</span><span style="flex:1"></span><button class="addbtn" onclick="addMember()">＋ 追加</button></div>
+    <table>
+      <colgroup><col style="width:40%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+      <thead><tr class="sub" style="font-size:12px"><th>メンバー</th><th>CarFlow</th><th>StockFlow</th><th>PitFlow</th></tr></thead>
+      <tbody id="roster"></tbody>
+    </table>
+    <div id="editor" style="margin-top:14px"></div>
+  </div>
+</div>
+
+<div id="enterLabel"><div class="ic" id="elIc">🚙</div><div class="nm" id="elNm">CarFlow</div><div class="go">ひらいています…</div></div>
+<div id="toast"></div>
+
+<div id="modal-crop" onclick="if(event.target===this)closeCrop()">
+  <div class="crop-box">
+    <div class="crop-hd"><span style="font-weight:600">アイコンを調整</span><button class="tbtn" onclick="closeCrop()">✕</button></div>
+    <div style="padding:18px">
+      <div class="crop-area" id="crop-area"><img id="crop-img" alt="" draggable="false">
+        <svg class="crop-svg" viewBox="0 0 300 300" preserveAspectRatio="none"><defs><mask id="cropCircleMask"><rect width="300" height="300" fill="white"/><circle cx="150" cy="150" r="120" fill="black"/></mask></defs><rect width="300" height="300" fill="rgba(0,0,0,0.6)" mask="url(#cropCircleMask)"/><circle cx="150" cy="150" r="120" fill="none" stroke="white" stroke-width="2"/></svg>
+      </div>
+      <div style="margin-top:14px"><div class="sub" style="font-size:11px;font-weight:600;margin-bottom:4px">🔍 拡大／縮小</div><input type="range" id="crop-zoom" min="0.5" max="4" step="0.01" value="1" oninput="onCropZoom(this.value)" style="width:100%"></div>
+      <div class="ter" style="font-size:11px;margin-top:10px;text-align:center;line-height:1.5">画像をドラッグして位置調整／スライダーで拡大縮小</div>
+    </div>
+    <div class="crop-ft"><button class="tbtn" onclick="closeCrop()">キャンセル</button><button class="savebtn" onclick="applyCrop()">適用する</button></div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
+<script src="firebase-init.js"></script>
+<script>
+var COMPANY_ID='kobayashi_motors';
+function $(id){return document.getElementById(id)}
+function show(el,on){$(el).style.display=on?'':'none'}
+
+/* ---------- 認証 ---------- */
+function loginWithGoogle(){
+ if(!window.fb||!window.fb.auth){$('login-msg').textContent='接続準備中です。少し待って再度お試しください。';return;}
+ var p=new firebase.auth.GoogleAuthProvider();
+ window.fb.auth.signInWithPopup(p).catch(function(err){
+  console.error('[login]',err);
+  $('login-msg').textContent=(err&&err.code==='auth/unauthorized-domain')?'このURLがFirebaseに未登録です（承認済みドメインの設定が必要）。':'ログインに失敗しました。もう一度お試しください。';
+ });
+}
+function doLogout(){ if(window.fb&&window.fb.auth)window.fb.auth.signOut(); else location.reload(); }
+function showLogin(){show('login',true);show('denied',false);$('portal').classList.remove('show');}
+function showDenied(){show('login',false);show('denied',true);$('portal').classList.remove('show');}
+async function checkAccess(user){
+ try{
+  var doc=await window.fb.db.collection('companies').doc(COMPANY_ID).collection('staff').doc(user.uid).get();
+  if(doc.exists){var d=doc.data();if(d.active!==false&&(d.role==='admin'||d.role==='manager'))return d;}
+  return null;
+ }catch(e){console.error('[access]',e);return null;}
+}
+function enterPortal(staff,user){
+ show('login',false);show('denied',false);$('portal').classList.add('show');
+ var nm=(staff&&(staff.displayName))||user.displayName||user.email||'ユーザー';
+ $('u-name').textContent=nm;
+ var photo=(staff&&(staff.customPhotoURL||staff.photoURL))||user.photoURL;
+ $('u-av').innerHTML=photo?'<img src="'+photo+'" alt="">':String(nm).slice(0,1);
+ buildNodes();layout();showView('top');
+}
+function wireAuth(){
+ if(!window.fb||!window.fb.auth){$('login-msg').textContent='接続の準備に失敗しました。ページを再読み込みしてください。';return;}
+ window.fb.auth.onAuthStateChanged(async function(user){
+  if(!user){window.fb.currentUser=null;window.fb.currentStaff=null;showLogin();return;}
+  window.fb.currentUser=user;
+  var staff=await checkAccess(user);
+  if(staff){window.fb.currentStaff=staff;enterPortal(staff,user);}
+  else{await window.fb.auth.signOut().catch(function(){});showDenied();}
+ });
+}
+
+/* ---------- 画面切替 ---------- */
+function showView(v){
+ show('view-top',v==='top');show('view-admin',v==='admin');
+ if(v==='top'){layout();} if(v==='admin'){rr();}
+ window.scrollTo(0,0);
+}
+
+/* ---------- TOP（エコシステム） ---------- */
+var APPS=[
+ {key:'carflow',name:'CarFlow',emoji:'🚙',color:'#378ADD',url:'https://carflow.kobayashi-motors.com',live:true},
+ {key:'stockflow',name:'StockFlow',emoji:'📦',color:'#7c3aed',url:'https://yuta19kmail-coder.github.io/stockflow/',live:true},
+ {key:'pitflow',name:'PitFlow',emoji:'🔧',color:'#1db97a',live:false},
+ {key:'moneyflow',name:'MoneyFlow',emoji:'💴',color:'#e0a92b',live:false},
+ {key:'growflow',name:'GrowFlow',emoji:'🌱',color:'#14b8a6',live:false}
+];
+var _built=false;
+function buildNodes(){
+ if(_built)return;_built=true;var stage=$('stage');
+ APPS.forEach(function(a){
+  var b=document.createElement('button');b.className='node'+(a.live?'':' soon');b.style.setProperty('--c',a.color);
+  b.innerHTML='<span class="ic">'+a.emoji+'</span><span class="lb">'+a.name+'</span>'+(a.live?'':'<span class="badge">Coming Soon</span>');
+  b.addEventListener('mouseenter',function(){if(a.live)floodFrom(b,a.color,false)});
+  b.addEventListener('mouseleave',function(){floodOff(b)});
+  b.addEventListener('click',function(){a.live?enterApp(a,b):soon(b)});
+  stage.appendChild(b);
+ });
+}
+function floodFrom(node,color,full){
+ var r=node.querySelector('.ic').getBoundingClientRect();var cx=r.left+r.width/2,cy=r.top+r.height/2;var W=innerWidth,H=innerHeight;
+ var maxD=Math.max(Math.hypot(cx,cy),Math.hypot(W-cx,cy),Math.hypot(cx,H-cy),Math.hypot(W-cx,H-cy));var s=(maxD/85)*1.06;
+ var f=$('flood');document.body.style.setProperty('--fc',color);f.style.left=cx+'px';f.style.top=cy+'px';f.style.opacity=full?'1':'.92';f.style.transform='translate(-50%,-50%) scale('+s+')';
+ document.body.classList.add('flooding');node.classList.add('hot');
+}
+function floodOff(node){var f=$('flood');f.style.transform='translate(-50%,-50%) scale(0)';f.style.opacity='0';document.body.classList.remove('flooding');if(node)node.classList.remove('hot');}
+function enterApp(a,node){floodFrom(node,a.color,true);$('elIc').textContent=a.emoji;$('elNm').textContent=a.name;document.body.classList.add('entering');setTimeout(function(){a.url?location.href=a.url:resetTop()},480);}
+function resetTop(){document.body.classList.remove('flooding','entering');var f=$('flood');f.style.transform='translate(-50%,-50%) scale(0)';f.style.opacity='0';document.querySelectorAll('.node.hot').forEach(function(n){n.classList.remove('hot')});}
+var _tt;function soon(node){node.classList.remove('shake');void node.offsetWidth;node.classList.add('shake');var t=$('toast');t.textContent='🚧 Coming Soon（準備中）';t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(function(){t.classList.remove('show')},1600);}
+function layout(){var n=APPS.length,R=41;document.querySelectorAll('.node').forEach(function(el,i){var ang=(-90+i*(360/n))*Math.PI/180;el.style.left=(50+R*Math.cos(ang))+'%';el.style.top=(50+R*Math.sin(ang))+'%';});}
+window.addEventListener('resize',function(){layout()});
+
+/* ---------- メンバー管理（試作表示・保存は次段階） ---------- */
+var ROLES={carflow:['管理者','マネージャー','スタッフ','閲覧'],stockflow:['管理','メンバー'],pitflow:['管理','メンバー']};
+var GROUPS=['車販チーム','整備チーム','事務','（なし）'];
+var AC={carflow:'#378ADD',stockflow:'#7c3aed',pitflow:'#1db97a'},AN={carflow:'CarFlow',stockflow:'StockFlow',pitflow:'PitFlow'};
+var DATA=[
+ {id:'p1',name:'小林裕太',gname:'小林裕太',ini:'小',color:'#378ADD',email:'kobayashi@example.com',title:'工場長 兼 経営者',dept:'経営',active:true,master:true,admin:true,carflow:{on:true,role:'管理者',group:'車販チーム'},stockflow:{on:true,role:'管理'},pitflow:{on:true,role:'管理'}},
+ {id:'p2',name:'山田太郎',gname:'山田太郎',ini:'山',color:'#a78bfa',email:'yamada@example.com',title:'営業',dept:'車販',active:true,admin:false,carflow:{on:true,role:'マネージャー',group:'車販チーム'},stockflow:{on:false,role:'メンバー'},pitflow:{on:true,role:'メンバー'}},
+ {id:'p3',name:'佐藤健一',gname:'佐藤健一',ini:'佐',color:'#34d399',email:'sato@example.com',title:'整備士',dept:'整備',active:true,admin:false,carflow:{on:true,role:'スタッフ',group:'整備チーム'},stockflow:{on:false,role:'メンバー'},pitflow:{on:true,role:'メンバー'}},
+ {id:'p4',name:'高橋美咲',gname:'高橋美咲',ini:'高',color:'#e0b56a',email:'takahashi@example.com',title:'事務',dept:'事務',active:true,admin:false,carflow:{on:true,role:'閲覧',group:'事務'},stockflow:{on:true,role:'メンバー'},pitflow:{on:false,role:'メンバー'}},
+ {id:'p5',name:'田中 正',gname:'田中 正',ini:'田',color:'#f0999b',email:'tanaka@example.com',title:'物販担当',dept:'物販',active:true,admin:false,carflow:{on:false,role:'スタッフ',group:'（なし）'},stockflow:{on:true,role:'メンバー'},pitflow:{on:false,role:'メンバー'}}
+];
+var SEL='p1',NEWN=0;
+function get(){return DATA.find(function(p){return p.id===SEL})}
+function esc(v){return String(v==null?'':v).replace(/"/g,'&quot;')}
+function avatarHTML(p,sz){sz=sz||32;if(p.photo)return '<span class="av" style="width:'+sz+'px;height:'+sz+'px;overflow:hidden;padding:0"><img src="'+p.photo+'" alt=""></span>';return '<span class="av" style="width:'+sz+'px;height:'+sz+'px;font-size:'+Math.round(sz*0.42)+'px;background:'+(p.color||'#26314a')+';color:#0e1117">'+p.ini+'</span>';}
+function pill(app,a){if(!a||!a.on)return '<span style="display:inline-flex;align-items:center;gap:6px;color:var(--t3);font-size:13px"><span class="dot" style="background:#3a3f4b"></span>—</span>';var g=(app==='carflow'&&a.group&&a.group!=='（なし）')?'<div class="ter" style="font-size:11px;margin:2px 0 0 16px">'+a.group+'</div>':'';return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:13px"><span class="dot" style="background:'+AC[app]+'"></span>'+a.role+'</span>'+g;}
+function renderTable(){
+ $('roster').innerHTML=DATA.map(function(p){var shield=p.admin?' <span title="メンバー管理に入れる（管理者）" style="color:var(--admin)">🛡</span>':'';
+  return '<tr class="row '+(p.id===SEL?'sel':'')+'" onclick="selectPerson(\''+p.id+'\')"><td><div style="display:flex;align-items:center;gap:10px">'+avatarHTML(p,32)+'<div style="min-width:0"><div style="font-size:14px">'+p.name+shield+(p.active?'':' <span class="ter" style="font-size:11px">(無効)</span>')+'</div><div class="sub" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+([p.title,p.dept].filter(Boolean).join(' ・ ')||'—')+'</div></div></div></td><td>'+pill('carflow',p.carflow)+'</td><td>'+pill('stockflow',p.stockflow)+'</td><td>'+pill('pitflow',p.pitflow)+'</td></tr>';
+ }).join('');
+}
+function appCard(app){var p=get(),a=p[app],on=a.on,lock=!!p.master;var ro=ROLES[app].map(function(r){return '<option '+(r===a.role?'selected':'')+'>'+r+'</option>'}).join('');var grp='';if(app==='carflow'){var go=GROUPS.map(function(g){return '<option '+(g===a.group?'selected':'')+'>'+g+'</option>'}).join('');grp='<label class="lbl" style="margin-top:8px">グループ <span class="ter">（CarFlow専用）</span></label><select onchange="setGroup(this.value)" '+((on&&!lock)?'':'disabled')+'>'+go+'</select>';}var fixed=lock?' <span class="ter" style="font-size:11px;font-weight:400">（固定）</span>':'';return '<div class="sec" style="'+(on?'':'opacity:.5')+'"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="dot" style="background:'+AC[app]+'"></span><span style="font-weight:600;flex:1">'+AN[app]+fixed+'</span><label style="font-size:12px;display:inline-flex;align-items:center;gap:5px"><input type="checkbox" style="width:auto" '+(on?'checked':'')+' '+(lock?'disabled':'')+' onchange="toggleApp(\''+app+'\',this.checked)"> 使える</label></div><label class="lbl">役割</label><select onchange="setRole(\''+app+'\',this.value)" '+((on&&!lock)?'':'disabled')+'>'+ro+'</select>'+grp+'</div>';}
+function renderEditor(){var p=get();
+ var adminRow=p.master?'<div class="sec" style="display:flex;align-items:center;gap:8px;margin:12px 0;border:1px solid rgba(224,181,106,.35)"><span style="color:var(--admin)">🛡</span><span style="font-size:13px">全アプリ管理者・マスター（固定）</span><span class="ter" style="font-size:12px;margin-left:auto">最上位権限。誤操作で変わらないよう固定</span></div>':'<label class="sec" style="display:flex;align-items:center;gap:8px;margin:12px 0;cursor:pointer"><input type="checkbox" style="width:auto" '+(p.admin?'checked':'')+' onchange="toggleAdmin(this.checked)"><span style="font-size:13px"><span style="color:var(--admin);margin-right:5px">👥</span>このメンバーを「メンバー管理」に入れる（管理者にする）</span></label>';
+ $('editor').innerHTML='<div class="card" style="padding:16px"><div style="display:flex;align-items:flex-start;gap:14px"><div style="flex:none;text-align:center">'+avatarHTML(p,64)+'<div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;align-items:center"><button class="addbtn" style="font-size:11px" onclick="document.getElementById(\'crop-file\').click()">📷 写真を変更</button>'+(p.photo?'<button class="tbtn" style="font-size:11px;padding:3px 8px" onclick="removePhoto()">削除</button>':'')+'</div><input type="file" id="crop-file" accept="image/*" onchange="onAvatarFile(this)" style="display:none"></div><div style="flex:1;min-width:0"><label class="lbl">表示名（全アプリ共通）</label><input value="'+esc(p.name)+'" oninput="setName(this.value)" style="font-size:15px"><div class="ter" style="font-size:11px;margin-top:4px;line-height:1.5">Googleアカウント名：'+esc(p.gname)+'（自動取得）。表示名とアイコンは、ここの設定を <b>CarFlow含む全アプリに反映</b>します。</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><div><label class="lbl">役職</label><input value="'+esc(p.title)+'" oninput="setTitle(this.value)" placeholder="例：工場長"></div><div><label class="lbl">所属部署</label><input value="'+esc(p.dept)+'" oninput="setDept(this.value)" placeholder="例：車販"></div></div><div style="display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:8px;align-items:end"><div><label class="lbl">メール</label><input value="'+esc(p.email)+'" oninput="setEmail(this.value)" placeholder="メールアドレス"></div><label style="font-size:12px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding-bottom:8px"><input type="checkbox" style="width:auto" '+(p.active?'checked':'')+' '+(p.master?'disabled':'')+' onchange="toggleActive(this.checked)"> 在籍中'+(p.master?'（固定）':'')+'</label></div></div></div>'+adminRow+'<div class="sub" style="font-size:12px;margin-bottom:8px">入れるアプリと役割（細かい権限は後で追加）</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">'+appCard('carflow')+appCard('stockflow')+appCard('pitflow')+'</div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="delbtn"'+(p.master?' disabled style="opacity:.4;cursor:default"':'')+'>🗑 削除</button><button class="savebtn">💾 保存</button></div></div>';
+}
+function rr(){renderTable();renderEditor();}
+function selectPerson(id){SEL=id;rr();}
+function toggleApp(a,v){var p=get();if(p.master){renderEditor();return;}p[a].on=v;rr();}
+function setRole(a,v){var p=get();if(p.master)return;p[a].role=v;renderTable();}
+function setGroup(v){get().carflow.group=v;renderTable();}
+function toggleAdmin(v){var p=get();if(p.master)return;p.admin=v;renderTable();}
+function setName(v){var p=get();p.name=v;p.ini=(v||'？').trim().charAt(0)||'？';renderTable();}
+function setEmail(v){get().email=v;renderTable();}
+function setTitle(v){get().title=v;renderTable();}
+function setDept(v){get().dept=v;renderTable();}
+function toggleActive(v){var p=get();if(p.master){renderEditor();return;}p.active=v;renderTable();}
+function addMember(){NEWN++;var id='n'+NEWN;DATA.push({id:id,name:'新しいメンバー'+NEWN,gname:'（ログイン時に取得）',ini:'新',color:'#5fb3c7',email:'',title:'',dept:'',active:true,admin:false,carflow:{on:false,role:'スタッフ',group:'（なし）'},stockflow:{on:false,role:'メンバー'},pitflow:{on:false,role:'メンバー'}});SEL=id;rr();}
+
+/* ---------- アイコン円形クロッパー（CarFlow から移植） ---------- */
+function onAvatarFile(input){var f=input.files&&input.files[0];if(!f)return;openCrop(f,function(dataUrl){get().photo=dataUrl;rr();});input.value='';}
+function removePhoto(){get().photo=null;rr();}
+var _crop={imgW:0,imgH:0,offX:0,offY:0,scale:1,drag:false,sx0:0,sy0:0,ox0:0,oy0:0,onApply:null},CROP_D=240;
+function openCrop(file,onApply){_crop.onApply=onApply||null;var reader=new FileReader();reader.onload=function(e){var img=$('crop-img');if(!img)return;img.onload=function(){_crop.imgW=img.naturalWidth;_crop.imgH=img.naturalHeight;var fit=Math.max(CROP_D/img.naturalWidth,CROP_D/img.naturalHeight);_crop.scale=fit;_crop.offX=0;_crop.offY=0;var sl=$('crop-zoom');if(sl){sl.min=String(fit);sl.max=String(fit*4);sl.value=String(fit);}cropT();};img.src=e.target.result;};reader.readAsDataURL(file);$('modal-crop').classList.add('open');setupCropDrag();}
+function cropT(){var img=$('crop-img');if(!img)return;var s=_crop;img.style.width=s.imgW+'px';img.style.height='auto';img.style.transform='translate(-50%,-50%) translate('+s.offX+'px,'+s.offY+'px) scale('+s.scale+')';}
+function onCropZoom(v){_crop.scale=Number(v);cropT();}
+function closeCrop(){var m=$('modal-crop');if(m)m.classList.remove('open');}
+function setupCropDrag(){var area=$('crop-area');if(!area||area.dataset.b==='1')return;area.dataset.b='1';function dn(x,y){_crop.drag=true;_crop.sx0=x;_crop.sy0=y;_crop.ox0=_crop.offX;_crop.oy0=_crop.offY;area.classList.add('dragging');}function mv(x,y){if(!_crop.drag)return;_crop.offX=_crop.ox0+(x-_crop.sx0);_crop.offY=_crop.oy0+(y-_crop.sy0);cropT();}function up(){_crop.drag=false;area.classList.remove('dragging');}area.addEventListener('mousedown',function(e){e.preventDefault();dn(e.clientX,e.clientY);});document.addEventListener('mousemove',function(e){mv(e.clientX,e.clientY);});document.addEventListener('mouseup',up);area.addEventListener('touchstart',function(e){if(e.touches.length===1)dn(e.touches[0].clientX,e.touches[0].clientY);});area.addEventListener('touchmove',function(e){if(e.touches.length===1){e.preventDefault();mv(e.touches[0].clientX,e.touches[0].clientY);}},{passive:false});area.addEventListener('touchend',up);}
+function applyCrop(){var s=_crop;if(!s.imgW||!s.imgH)return;var img=$('crop-img');if(!img)return;var OUT=256,c=document.createElement('canvas');c.width=OUT;c.height=OUT;var ctx=c.getContext('2d');ctx.beginPath();ctx.arc(OUT/2,OUT/2,OUT/2,0,Math.PI*2);ctx.clip();var sw=CROP_D/s.scale,sh=CROP_D/s.scale;var sx=(s.imgW/2)-(s.offX/s.scale)-sw/2,sy=(s.imgH/2)-(s.offY/s.scale)-sh/2;ctx.drawImage(img,sx,sy,sw,sh,0,0,OUT,OUT);var dataUrl=c.toDataURL('image/png');if(typeof s.onApply==='function')s.onApply(dataUrl);closeCrop();}
+
+window.addEventListener('DOMContentLoaded',function(){ showLogin(); wireAuth(); });
+</script>
+</body>
+</html>

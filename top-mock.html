@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>小林モータース ポータル — エコシステムTOP（モック）</title>
+<style>
+*{margin:0;box-sizing:border-box}
+body{background:#0c0e14;color:#e8eaf0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Hiragino Kaku Gothic ProN","Yu Gothic Medium","Meiryo",sans-serif;min-height:100vh;overflow-x:hidden;position:relative}
+
+/* ふくらむ色（そのアイコンの位置から広がる） */
+#flood{position:fixed;left:0;top:0;width:170px;height:170px;border-radius:50%;background:var(--fc,#333);opacity:0;transform:translate(-50%,-50%) scale(0);transition:transform .55s cubic-bezier(.22,.61,.36,1),opacity .35s;pointer-events:none;z-index:1}
+
+/* ログイン（入口） */
+#login{position:fixed;inset:0;z-index:10;display:flex;flex-direction:column;align-items:center;justify-content:center;background:#0c0e14;padding:20px;text-align:center}
+.lcard{max-width:360px;width:100%}
+.lname{font-weight:800;font-size:22px;margin-top:14px}
+.lsub{font-size:11px;letter-spacing:5px;color:#8a92a3;margin-top:4px}
+.gbtn{margin-top:30px;background:#fff;color:#222;border:none;border-radius:10px;padding:12px 22px;font-size:14px;font-weight:700;cursor:pointer;display:inline-flex;align-items:center;gap:10px}
+.gg{width:18px;height:18px;border-radius:50%;background:#4285F4;color:#fff;font-size:12px;font-weight:800;display:flex;align-items:center;justify-content:center}
+.lnote{font-size:11px;color:#5f6675;margin-top:18px;line-height:1.6}
+
+/* ポータルTOP */
+#portal{opacity:0;transition:opacity .5s;pointer-events:none}
+#portal.show{opacity:1;pointer-events:auto}
+#stage{position:relative;z-index:2;width:min(82vw,84vh,640px);aspect-ratio:1;margin:7vh auto 0}
+.ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:84%;height:84%;border:1px solid rgba(255,255,255,.09);border-radius:50%;transition:opacity .3s}
+#center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:210px;transition:opacity .3s}
+.cname{font-weight:800;font-size:19px;margin-top:8px;letter-spacing:.5px}
+.csub{font-size:10px;letter-spacing:4px;color:#8a92a3;margin-top:3px}
+.node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;background:none;border:none;color:inherit;width:120px;transition:opacity .3s}
+.node .ic{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:27px;transition:transform .2s,box-shadow .2s;background:var(--c)}
+.node .lb{font-size:13px;font-weight:600;white-space:nowrap}
+.node:hover .ic,.node.hot .ic{transform:scale(1.13);box-shadow:0 0 30px var(--c)}
+.node.soon{cursor:default}
+.node.soon .ic{filter:grayscale(.45);opacity:.85}
+.node.soon .lb{color:#8a92a3}
+.badge{font-size:10px;color:#cdd3df;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:1px 8px}
+.shake{animation:shk .4s}
+@keyframes shk{0%,100%{transform:translate(-50%,-50%)}25%{transform:translate(-54%,-50%)}75%{transform:translate(-46%,-50%)}}
+body.flooding .node:not(.hot){opacity:.18}
+body.flooding #center{opacity:.22}
+body.flooding .ring{opacity:0}
+.gear{position:fixed;top:16px;right:18px;z-index:5;width:40px;height:40px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:#cfd6e2;font-size:17px;display:flex;align-items:center;justify-content:center;cursor:pointer;text-decoration:none}
+.gear:hover{background:rgba(255,255,255,.12)}
+.foot{position:fixed;bottom:18px;left:0;right:0;text-align:center;font-size:11px;letter-spacing:1.5px;color:#6b7280;z-index:3}
+#enterLabel{position:fixed;inset:0;z-index:4;display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;pointer-events:none}
+body.entering #enterLabel{display:flex}
+#enterLabel .ic{width:90px;height:90px;border-radius:50%;background:rgba(255,255,255,.2);display:flex;align-items:center;justify-content:center;font-size:42px;margin-bottom:16px}
+#enterLabel .nm{font-size:24px;font-weight:800}
+#enterLabel .go{font-size:12px;color:rgba(255,255,255,.8);margin-top:8px;letter-spacing:2px}
+#toast{position:fixed;bottom:62px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.16);color:#fff;font-size:13px;padding:8px 16px;border-radius:20px;z-index:6;opacity:0;transition:opacity .25s;pointer-events:none}
+#toast.show{opacity:1}
+@media (max-width:680px){
+  #stage{width:auto;aspect-ratio:auto;margin:16px;display:flex;flex-direction:column;gap:9px}
+  .ring{display:none}
+  #center{position:static;transform:none;width:auto;margin:6px auto 16px}
+  .node{position:static!important;transform:none!important;flex-direction:row;width:100%;justify-content:flex-start;gap:14px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:14px;padding:11px 14px}
+  .node .ic{width:44px;height:44px;font-size:21px}
+  body.flooding .node:not(.hot){opacity:1}
+  body.flooding #center{opacity:1}
+}
+</style>
+</head>
+<body>
+<div id="flood"></div>
+
+<!-- 入口：Google認証（仮） -->
+<div id="login">
+  <div class="lcard">
+    <svg width="64" height="64" viewBox="0 0 56 56" style="display:block;margin:0 auto">
+      <circle cx="28" cy="28" r="22" fill="none" stroke="#fff" stroke-width="2" opacity=".22"/>
+      <circle cx="28" cy="28" r="7" fill="#fff"/>
+      <circle cx="28" cy="6.5" r="3.2" fill="#fff" opacity=".85"/>
+      <circle cx="49.5" cy="28" r="3.2" fill="#fff" opacity=".85"/>
+      <circle cx="28" cy="49.5" r="3.2" fill="#fff" opacity=".85"/>
+      <circle cx="6.5" cy="28" r="3.2" fill="#fff" opacity=".85"/>
+    </svg>
+    <div class="lname">小林モータース</div>
+    <div class="lsub">P O R T A L（仮）</div>
+    <button class="gbtn" onclick="login()"><span class="gg">G</span> Google でログイン</button>
+    <div class="lnote">まずここでログインし、その後にアプリ一覧（TOP）へ。<br>※ 今は仮のログインです（本物のGoogle認証は実装時に）。</div>
+  </div>
+</div>
+
+<!-- ポータルTOP（ログイン後に表示） -->
+<div id="portal">
+  <a class="gear" href="index.html" title="メンバー管理（管理者用）">⚙</a>
+  <div id="stage">
+    <div class="ring"></div>
+    <div id="center">
+      <svg width="58" height="58" viewBox="0 0 56 56" style="display:block;margin:0 auto">
+        <circle cx="28" cy="28" r="22" fill="none" stroke="#fff" stroke-width="2" opacity=".22"/>
+        <circle cx="28" cy="28" r="7" fill="#fff"/>
+        <circle cx="28" cy="6.5" r="3.2" fill="#fff" opacity=".85"/>
+        <circle cx="49.5" cy="28" r="3.2" fill="#fff" opacity=".85"/>
+        <circle cx="28" cy="49.5" r="3.2" fill="#fff" opacity=".85"/>
+        <circle cx="6.5" cy="28" r="3.2" fill="#fff" opacity=".85"/>
+      </svg>
+      <div class="cname">小林モータース</div>
+      <div class="csub">P O R T A L</div>
+    </div>
+  </div>
+  <div class="foot">小林モータース ECOSYSTEM ・ アイコンにホバー → クリックでアプリへ</div>
+</div>
+
+<div id="enterLabel"><div class="ic" id="elIc">🚙</div><div class="nm" id="elNm">CarFlow</div><div class="go">ひらいています…</div></div>
+<div id="toast"></div>
+
+<script>
+var APPS=[
+ {key:'carflow', name:'CarFlow', emoji:'🚙', color:'#378ADD', url:'https://carflow.kobayashi-motors.com', live:true},
+ {key:'stockflow', name:'StockFlow', emoji:'📦', color:'#7c3aed', url:'https://yuta19kmail-coder.github.io/stockflow/', live:true},
+ {key:'pitflow', name:'PitFlow', emoji:'🔧', color:'#1db97a', live:false},
+ {key:'moneyflow', name:'MoneyFlow', emoji:'💴', color:'#e0a92b', live:false},
+ {key:'growflow', name:'GrowFlow', emoji:'🌱', color:'#14b8a6', live:false}
+];
+var stage=document.getElementById('stage');
+function login(){
+ document.getElementById('login').style.display='none';
+ document.getElementById('portal').classList.add('show');
+ layout();
+}
+function build(){
+ APPS.forEach(function(a){
+  var b=document.createElement('button');
+  b.className='node'+(a.live?'':' soon');
+  b.style.setProperty('--c',a.color);
+  b.innerHTML='<span class="ic">'+a.emoji+'</span><span class="lb">'+a.name+'</span>'+(a.live?'':'<span class="badge">Coming Soon</span>');
+  b.addEventListener('mouseenter',function(){if(a.live)floodFrom(b,a.color,false);});
+  b.addEventListener('mouseleave',function(){floodOff(b);});
+  b.addEventListener('click',function(){a.live?enter(a,b):soon(b);});
+  stage.appendChild(b);
+ });
+}
+function floodFrom(node,color,full){
+ var ic=node.querySelector('.ic'); var r=ic.getBoundingClientRect();
+ var cx=r.left+r.width/2, cy=r.top+r.height/2;
+ var W=innerWidth,H=innerHeight;
+ var maxD=Math.max(Math.hypot(cx,cy),Math.hypot(W-cx,cy),Math.hypot(cx,H-cy),Math.hypot(W-cx,H-cy));
+ var s=(maxD/85)*1.06;
+ var f=document.getElementById('flood');
+ document.body.style.setProperty('--fc',color);
+ f.style.left=cx+'px'; f.style.top=cy+'px';
+ f.style.opacity = full?'1':'.92';
+ f.style.transform='translate(-50%,-50%) scale('+s+')';
+ document.body.classList.add('flooding'); node.classList.add('hot');
+}
+function floodOff(node){
+ var f=document.getElementById('flood'); f.style.transform='translate(-50%,-50%) scale(0)'; f.style.opacity='0';
+ document.body.classList.remove('flooding'); if(node)node.classList.remove('hot');
+}
+function enter(a,node){
+ floodFrom(node,a.color,true);
+ document.getElementById('elIc').textContent=a.emoji;
+ document.getElementById('elNm').textContent=a.name;
+ document.body.classList.add('entering');
+ setTimeout(function(){ if(a.url){location.href=a.url;} else {reset();} },480);
+}
+function reset(){document.body.classList.remove('flooding','entering');var f=document.getElementById('flood');f.style.transform='translate(-50%,-50%) scale(0)';f.style.opacity='0';document.querySelectorAll('.node.hot').forEach(function(n){n.classList.remove('hot')});}
+var _tt;
+function soon(node){
+ node.classList.remove('shake'); void node.offsetWidth; node.classList.add('shake');
+ var t=document.getElementById('toast'); t.textContent='🚧 Coming Soon（準備中）'; t.classList.add('show');
+ clearTimeout(_tt); _tt=setTimeout(function(){t.classList.remove('show')},1600);
+}
+function layout(){
+ var n=APPS.length,R=41;
+ document.querySelectorAll('.node').forEach(function(el,i){
+  var ang=(-90+i*(360/n))*Math.PI/180;
+  el.style.left=(50+R*Math.cos(ang))+'%';
+  el.style.top=(50+R*Math.sin(ang))+'%';
+ });
+}
+build(); layout();
+window.addEventListener('resize',layout);
+</script>
+</body>
+</html>
