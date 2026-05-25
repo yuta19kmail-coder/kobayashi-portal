@@ -228,7 +228,8 @@ function wireAuth(){
 
 /* ---------- 画面切替 ---------- */
 function showView(v){
- show('view-top',v==='top');show('view-admin',v==='admin');
+ document.getElementById('view-top').style.display=(v==='top')?'block':'none';
+ document.getElementById('view-admin').style.display=(v==='admin')?'block':'none';
  if(v==='top'){layout();} if(v==='admin'){rr();}
  window.scrollTo(0,0);
 }
