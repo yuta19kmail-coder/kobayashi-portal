@@ -8,7 +8,7 @@
 (function () {
   const firebaseConfig = {
     apiKey: "AIzaSyBmhI5SzkmPvZUiuTn_ttCZ4tUikKv_iHI",
-    authDomain: "carflow-9d500.firebaseapp.com",
+    authDomain: "coreflow.kobayashi-motors.com",
     projectId: "carflow-9d500",
     storageBucket: "carflow-9d500.firebasestorage.app",
     messagingSenderId: "235121541987",

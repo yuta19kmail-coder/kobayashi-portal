@@ -182,7 +182,7 @@ th,td{border-bottom:1px solid rgba(255,255,255,.06);padding:9px 8px;text-align:l
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.13.2/firebase-firestore-compat.js"></script>
-<script src="firebase-init.js"></script>
+<script src="firebase-init.js?v=2"></script>
 <script>
 var COMPANY_ID='kobayashi_motors';
 function $(id){return document.getElementById(id)}
@@ -272,14 +272,8 @@ window.addEventListener('resize',function(){layout()});
 var ROLES={carflow:['管理者','マネージャー','スタッフ','閲覧'],stockflow:['管理','メンバー'],pitflow:['管理','メンバー']};
 var GROUPS=['車販チーム','整備チーム','事務','（なし）'];
 var AC={carflow:'#378ADD',stockflow:'#7c3aed',pitflow:'#1db97a'},AN={carflow:'CarFlow',stockflow:'StockFlow',pitflow:'PitFlow'};
-var DATA=[
- {id:'p1',name:'小林裕太',gname:'小林裕太',ini:'小',color:'#378ADD',email:'kobayashi@example.com',title:'工場長 兼 経営者',dept:'経営',active:true,master:true,admin:true,carflow:{on:true,role:'管理者',group:'車販チーム'},stockflow:{on:true,role:'管理'},pitflow:{on:true,role:'管理'}},
- {id:'p2',name:'山田太郎',gname:'山田太郎',ini:'山',color:'#a78bfa',email:'yamada@example.com',title:'営業',dept:'車販',active:true,admin:false,carflow:{on:true,role:'マネージャー',group:'車販チーム'},stockflow:{on:false,role:'メンバー'},pitflow:{on:true,role:'メンバー'}},
- {id:'p3',name:'佐藤健一',gname:'佐藤健一',ini:'佐',color:'#34d399',email:'sato@example.com',title:'整備士',dept:'整備',active:true,admin:false,carflow:{on:true,role:'スタッフ',group:'整備チーム'},stockflow:{on:false,role:'メンバー'},pitflow:{on:true,role:'メンバー'}},
- {id:'p4',name:'高橋美咲',gname:'高橋美咲',ini:'高',color:'#e0b56a',email:'takahashi@example.com',title:'事務',dept:'事務',active:true,admin:false,carflow:{on:true,role:'閲覧',group:'事務'},stockflow:{on:true,role:'メンバー'},pitflow:{on:false,role:'メンバー'}},
- {id:'p5',name:'田中 正',gname:'田中 正',ini:'田',color:'#f0999b',email:'tanaka@example.com',title:'物販担当',dept:'物販',active:true,admin:false,carflow:{on:false,role:'スタッフ',group:'（なし）'},stockflow:{on:true,role:'メンバー'},pitflow:{on:false,role:'メンバー'}}
-];
-var SEL='p1',NEWN=0;
+var DATA=[];   // 本番：名簿はFirestore(portalMembers)から読み込む。サンプル投入なし。
+var SEL=null,NEWN=0;
 function get(){return DATA.find(function(p){return p.id===SEL})}
 /* ---------- 名簿の保存（Firestore: portalMembers） ---------- */
 function membersCol(){return window.fb.db.collection('companies').doc(COMPANY_ID).collection('portalMembers');}
