@@ -287,13 +287,26 @@ function membersCol(){return window.fb.db.collection('companies').doc(COMPANY_ID
 async function loadMembers(){var snap=await membersCol().get();var out=[];snap.forEach(function(d){var m=d.data();m.id=d.id;out.push(m);});return out;}
 async function saveMember(m){var data=JSON.parse(JSON.stringify(m));delete data.id;await membersCol().doc(m.id).set(data,{merge:true});}
 async function deleteMember(id){await membersCol().doc(id).delete();}
-function makeMasterDoc(user,staff){var nm=(staff&&staff.displayName)||user.displayName||'管理者';return {id:user.uid,uid:user.uid,name:nm,gname:user.displayName||nm,ini:(nm||'？').trim().charAt(0)||'？',color:'#378ADD',email:user.email||'',title:'',dept:'',active:true,master:true,admin:true,carflow:{on:true,role:'管理者',group:'（なし）'},stockflow:{on:true,role:'管理'},pitflow:{on:true,role:'管理'}};}
+function makeMasterDoc(user,staff){var nm=(staff&&staff.displayName)||user.displayName||'管理者';return {id:user.uid,uid:user.uid,name:nm,gname:user.displayName||nm,ini:(nm||'？').trim().charAt(0)||'？',color:'#378ADD',photo:(staff&&(staff.customPhotoURL||staff.photoURL))||user.photoURL||null,email:user.email||'',title:'',dept:'',active:true,master:true,admin:true,carflow:{on:true,role:'管理者',group:'（なし）'},stockflow:{on:true,role:'管理'},pitflow:{on:true,role:'管理'}};}
 async function ensureRoster(user,staff){
  try{var list=await loadMembers();
   if(!list.length){var me=makeMasterDoc(user,staff);await saveMember(me);list=[me];}
   DATA=list;SEL=(DATA[0]&&DATA[0].id)||null;
+  await autoFillMyPhoto(user,staff);
  }catch(e){console.error('[roster]',e);toast('名簿の読み込みに失敗しました（ルールの反映を確認してください）');DATA=[];SEL=null;}
  rr();
+}
+// 自分のアイコンが未設定なら CarFlow（カスタム→Google）→ Googleアカウント写真 の順で自動補完して保存。
+// 既に写真がある人（ポータルで手動設定した人含む）は上書きしない。
+async function autoFillMyPhoto(user,staff){
+ try{
+  var mine=DATA.find(function(m){return m.id===user.uid || (m.email&&user.email&&String(m.email).toLowerCase()===String(user.email).toLowerCase());});
+  if(!mine||mine.photo) return;
+  var pic=(staff&&(staff.customPhotoURL||staff.photoURL))||user.photoURL||null;
+  if(!pic) return;
+  mine.photo=pic;
+  await saveMember(mine);
+ }catch(e){console.warn('[autoFillMyPhoto]',e);}
 }
 var _ptt;function toast(msg){var t=$('toast');t.textContent=msg;t.classList.add('show');clearTimeout(_ptt);_ptt=setTimeout(function(){t.classList.remove('show')},1800);}
 async function saveCurrent(){var p=get();if(!p)return;try{await saveMember(p);toast('保存しました');}catch(e){console.error(e);toast('保存に失敗しました');}}
