@@ -3,6 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<script>
+  // 旧URL（GitHub Pages）からのアクセスを新URL（独自ドメイン）へ自動転送する。
+  // github.io から開いた時だけジャンプ。独自ドメイン/.web.app では何もしない。
+  if (location.hostname.indexOf('github.io') !== -1) {
+    location.replace('https://coreflow.kobayashi-motors.com/');
+  }
+</script>
 <title>CoreFlow ・ 小林モータース</title>
 <style>
 :root{
