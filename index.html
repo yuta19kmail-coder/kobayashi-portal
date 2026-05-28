@@ -357,6 +357,8 @@ function setupCropDrag(){var area=$('crop-area');if(!area||area.dataset.b==='1')
 function applyCrop(){var s=_crop;if(!s.imgW||!s.imgH)return;var img=$('crop-img');if(!img)return;var OUT=256,c=document.createElement('canvas');c.width=OUT;c.height=OUT;var ctx=c.getContext('2d');ctx.beginPath();ctx.arc(OUT/2,OUT/2,OUT/2,0,Math.PI*2);ctx.clip();var sw=CROP_D/s.scale,sh=CROP_D/s.scale;var sx=(s.imgW/2)-(s.offX/s.scale)-sw/2,sy=(s.imgH/2)-(s.offY/s.scale)-sh/2;ctx.drawImage(img,sx,sy,sw,sh,0,0,OUT,OUT);var dataUrl=c.toDataURL('image/jpeg',0.85);if(typeof s.onApply==='function')s.onApply(dataUrl);closeCrop();}
 
 window.addEventListener('DOMContentLoaded',function(){ showLogin(); wireAuth(); });
+// ブラウザバック（bfcache復元）で戻った時、アプリ遷移アニメ（◯◯ 開いてます…）の残りを消す
+window.addEventListener('pageshow',function(){ resetTop(); });
 </script>
 </body>
 </html>
