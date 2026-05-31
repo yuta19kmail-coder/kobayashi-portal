@@ -208,29 +208,47 @@ function loginWithGoogle(){
 function doLogout(){ if(window.fb&&window.fb.auth)window.fb.auth.signOut(); else location.reload(); }
 function showLogin(){show('login',true);show('denied',false);$('portal').classList.remove('show');}
 function showDenied(){show('login',false);show('denied',true);$('portal').classList.remove('show');}
+// v1.1.0：入室判定を portalMembers に切替（旧版は staff の admin/manager しか入れなかった）
+// 流れ：①自分のportalMembers doc を uid→email の順で探す
+//      ②active!==false なら入室OK（admin フラグは別途UIに反映）
+//      ③名簿に居なければ「権限なし」表示
 async function checkAccess(user){
  try{
-  var doc=await window.fb.db.collection('companies').doc(COMPANY_ID).collection('staff').doc(user.uid).get();
-  if(doc.exists){var d=doc.data();if(d.active!==false&&(d.role==='admin'||d.role==='manager'))return d;}
+  // ①uid 一致
+  var coll=window.fb.db.collection('companies').doc(COMPANY_ID).collection('portalMembers');
+  var doc=await coll.doc(user.uid).get();
+  if(doc.exists){var d=doc.data();if(d.active!==false){d.id=doc.id;return d;}}
+  // ②email 一致（招待ID等で doc id が uid と違う場合のフォールバック）
+  if(user.email){
+   try{
+    var snap=await coll.where('email','==',user.email).limit(1).get();
+    if(!snap.empty){var d2=snap.docs[0].data();if(d2.active!==false){d2.id=snap.docs[0].id;return d2;}}
+   }catch(e2){console.warn('[access email]',e2);}
+  }
   return null;
  }catch(e){console.error('[access]',e);return null;}
 }
-async function enterPortal(staff,user){
+async function enterPortal(member,user){
  show('login',false);show('denied',false);$('portal').classList.add('show');
- var nm=(staff&&(staff.displayName))||user.displayName||user.email||'ユーザー';
+ var nm=(member&&member.name)||user.displayName||user.email||'ユーザー';
  $('u-name').textContent=nm;
- var photo=(staff&&(staff.customPhotoURL||staff.photoURL))||user.photoURL;
+ var photo=(member&&(member.photo||member.photoURL||member.customPhotoURL))||user.photoURL;
  $('u-av').innerHTML=photo?'<img src="'+photo+'" alt="">':String(nm).slice(0,1);
+ // ⚙ メンバー管理は admin（または master）だけに表示。普通のメンバーには出さない。
+ var gear=document.getElementById('gear-admin');
+ var canAdmin=!!(member&&(member.admin===true||member.master===true));
+ if(gear) gear.style.display=canAdmin?'':'none';
  buildNodes();layout();showView('top');
- await ensureRoster(user,staff);
+ // 名簿シードは admin 権限のある人のときだけ走らせる（一般メンバーは名簿に書けないルール）
+ if(canAdmin){ await ensureRoster(user,member); }
 }
 function wireAuth(){
  if(!window.fb||!window.fb.auth){$('login-msg').textContent='接続の準備に失敗しました。ページを再読み込みしてください。';return;}
  window.fb.auth.onAuthStateChanged(async function(user){
-  if(!user){window.fb.currentUser=null;window.fb.currentStaff=null;showLogin();return;}
+  if(!user){window.fb.currentUser=null;window.fb.currentStaff=null;window.fb.currentMember=null;showLogin();return;}
   window.fb.currentUser=user;
-  var staff=await checkAccess(user);
-  if(staff){window.fb.currentStaff=staff;enterPortal(staff,user);}
+  var member=await checkAccess(user);
+  if(member){window.fb.currentMember=member;window.fb.currentStaff=member;enterPortal(member,user);}
   else{await window.fb.auth.signOut().catch(function(){});showDenied();}
  });
 }
