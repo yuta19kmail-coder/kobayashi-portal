@@ -213,20 +213,24 @@ function showDenied(){show('login',false);show('denied',true);$('portal').classL
 //      ②active!==false なら入室OK（admin フラグは別途UIに反映）
 //      ③名簿に居なければ「権限なし」表示
 async function checkAccess(user){
+ console.log('[CoreFlow] checkAccess開始 uid=', user.uid, 'email=', user.email);
  try{
   // ①uid 一致
   var coll=window.fb.db.collection('companies').doc(COMPANY_ID).collection('portalMembers');
   var doc=await coll.doc(user.uid).get();
-  if(doc.exists){var d=doc.data();if(d.active!==false){d.id=doc.id;return d;}}
+  console.log('[CoreFlow] uid検索 exists=', doc.exists);
+  if(doc.exists){var d=doc.data();if(d.active!==false){d.id=doc.id;console.log('[CoreFlow] uid一致でメンバー発見:', d.name, 'admin=', d.admin); return d;}}
   // ②email 一致（招待ID等で doc id が uid と違う場合のフォールバック）
   if(user.email){
    try{
     var snap=await coll.where('email','==',user.email).limit(1).get();
-    if(!snap.empty){var d2=snap.docs[0].data();if(d2.active!==false){d2.id=snap.docs[0].id;return d2;}}
-   }catch(e2){console.warn('[access email]',e2);}
+    console.log('[CoreFlow] email検索 hits=', snap.size);
+    if(!snap.empty){var d2=snap.docs[0].data();if(d2.active!==false){d2.id=snap.docs[0].id;console.log('[CoreFlow] email一致でメンバー発見:', d2.name, 'admin=', d2.admin); return d2;}}
+   }catch(e2){console.warn('[CoreFlow] email検索エラー（Firestoreルールが古い可能性）:',e2);}
   }
+  console.warn('[CoreFlow] 名簿に該当メンバーなし → 拒否画面へ');
   return null;
- }catch(e){console.error('[access]',e);return null;}
+ }catch(e){console.error('[CoreFlow] checkAccess失敗:',e);return null;}
 }
 async function enterPortal(member,user){
  show('login',false);show('denied',false);$('portal').classList.add('show');
