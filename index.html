@@ -222,10 +222,38 @@ async function checkAccess(user){
   if(doc.exists){var d=doc.data();if(d.active!==false){d.id=doc.id;console.log('[CoreFlow] uid一致でメンバー発見:', d.name, 'admin=', d.admin); return d;}}
   // ②email 一致（招待ID等で doc id が uid と違う場合のフォールバック）
   if(user.email){
+   var emailLower=String(user.email).toLowerCase().trim();
    try{
+    // 完全一致
     var snap=await coll.where('email','==',user.email).limit(1).get();
-    console.log('[CoreFlow] email検索 hits=', snap.size);
-    if(!snap.empty){var d2=snap.docs[0].data();if(d2.active!==false){d2.id=snap.docs[0].id;console.log('[CoreFlow] email一致でメンバー発見:', d2.name, 'admin=', d2.admin); return d2;}}
+    console.log('[CoreFlow] email完全一致検索 hits=', snap.size);
+    if(!snap.empty){var d2=snap.docs[0].data();if(d2.active!==false){d2.id=snap.docs[0].id;console.log('[CoreFlow] email完全一致でメンバー発見:', d2.name, 'admin=', d2.admin); return d2;}}
+    // 小文字一致（保存時の正規化漏れ救済）
+    if(emailLower!==user.email){
+     snap=await coll.where('email','==',emailLower).limit(1).get();
+     console.log('[CoreFlow] email小文字検索 hits=', snap.size);
+     if(!snap.empty){var d3=snap.docs[0].data();if(d3.active!==false){d3.id=snap.docs[0].id;console.log('[CoreFlow] email小文字一致でメンバー発見:', d3.name); return d3;}}
+    }
+    // 全件スキャン（大文字小文字違い・前後スペース違いを救う）
+    console.log('[CoreFlow] 完全一致なし。名簿全件をスキャンして大文字小文字違いをチェック…');
+    var all=await coll.limit(100).get();
+    console.log('[CoreFlow] 名簿の総件数（≦100）=', all.size);
+    var matched=null;
+    all.forEach(function(docSnap){
+     if(matched) return;
+     var e=String((docSnap.data()||{}).email||'').toLowerCase().trim();
+     if(e && e===emailLower) matched=docSnap;
+    });
+    if(matched){
+     var d4=matched.data();
+     console.log('[CoreFlow] 大文字小文字違いで発見:', d4.email, '→', d4.name);
+     if(d4.active!==false){d4.id=matched.id; return d4;}
+    } else {
+     // デバッグ用：名簿のemail一覧を最初の数件だけ出す
+     var sampleEmails=[];
+     all.forEach(function(s){sampleEmails.push(s.data().email||'(空)');});
+     console.warn('[CoreFlow] 名簿のemail一覧（先頭10件）:', sampleEmails.slice(0,10));
+    }
    }catch(e2){console.warn('[CoreFlow] email検索エラー（Firestoreルールが古い可能性）:',e2);}
   }
   console.warn('[CoreFlow] 名簿に該当メンバーなし → 拒否画面へ');
@@ -310,7 +338,10 @@ function membersCol(){return window.fb.db.collection('companies').doc(COMPANY_ID
 async function loadMembers(){var snap=await membersCol().get();var out=[];snap.forEach(function(d){var m=d.data();m.id=d.id;out.push(m);});
  out.sort(function(a,b){var sa=(typeof a.sortOrder==='number')?a.sortOrder:999999;var sb=(typeof b.sortOrder==='number')?b.sortOrder:999999;if(sa!==sb)return sa-sb;return String(a.name||'').localeCompare(String(b.name||''),'ja');});
  return out;}
-async function saveMember(m){var data=JSON.parse(JSON.stringify(m));delete data.id;await membersCol().doc(m.id).set(data,{merge:true});}
+async function saveMember(m){var data=JSON.parse(JSON.stringify(m));delete data.id;
+ // v1.1.0：emailを小文字＋trimして保存（Googleアカウントとの完全一致を確実にする）
+ if(typeof data.email==='string') data.email=data.email.toLowerCase().trim();
+ await membersCol().doc(m.id).set(data,{merge:true});}
 async function deleteMember(id){await membersCol().doc(id).delete();}
 function makeMasterDoc(user,staff){var nm=(staff&&staff.displayName)||user.displayName||'管理者';return {id:user.uid,uid:user.uid,name:nm,gname:user.displayName||nm,ini:(nm||'？').trim().charAt(0)||'？',color:'#378ADD',photo:(staff&&(staff.customPhotoURL||staff.photoURL))||user.photoURL||null,email:user.email||'',title:'',dept:'',active:true,master:true,admin:true,carflow:{on:true,role:'管理者',group:'（なし）'},stockflow:{on:true,role:'管理'},pitflow:{on:true,role:'管理'}};}
 async function ensureRoster(user,staff){
