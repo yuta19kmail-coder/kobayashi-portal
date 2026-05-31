@@ -331,7 +331,7 @@ window.addEventListener('resize',function(){layout()});
 
 /* ---------- メンバー管理（試作表示・保存は次段階） ---------- */
 var ROLES={carflow:['管理者','マネージャー','スタッフ','閲覧'],stockflow:['管理','メンバー'],pitflow:['管理','メンバー']};
-var GROUPS=['車販チーム','整備チーム','事務','（なし）'];
+var GROUPS=['車販メンバー','他部署メンバー','（なし）'];
 var AC={carflow:'#378ADD',stockflow:'#7c3aed',pitflow:'#1db97a'},AN={carflow:'CarFlow',stockflow:'StockFlow',pitflow:'PitFlow'};
 var DATA=[];   // 本番：名簿はFirestore(portalMembers)から読み込む。サンプル投入なし。
 var SEL=null,NEWN=0;
