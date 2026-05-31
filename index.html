@@ -222,7 +222,7 @@ async function checkAccess(user){
   if(doc.exists){var d=doc.data();if(d.active!==false){d.id=doc.id;console.log('[CoreFlow] uid一致でメンバー発見:', d.name, 'admin=', d.admin); return d;}}
   // ②email 一致（招待ID等で doc id が uid と違う場合のフォールバック）
   if(user.email){
-   var emailLower=String(user.email).toLowerCase().trim();
+   var emailLower=_normEmail(user.email);
    try{
     // 完全一致
     var snap=await coll.where('email','==',user.email).limit(1).get();
@@ -241,7 +241,8 @@ async function checkAccess(user){
     var matched=null;
     all.forEach(function(docSnap){
      if(matched) return;
-     var e=String((docSnap.data()||{}).email||'').toLowerCase().trim();
+     // 全角英数も含めて正規化（全角＠→半角＠など）
+     var e=_normEmail(String((docSnap.data()||{}).email||''));
      if(e && e===emailLower) matched=docSnap;
     });
     if(matched){
@@ -338,9 +339,14 @@ function membersCol(){return window.fb.db.collection('companies').doc(COMPANY_ID
 async function loadMembers(){var snap=await membersCol().get();var out=[];snap.forEach(function(d){var m=d.data();m.id=d.id;out.push(m);});
  out.sort(function(a,b){var sa=(typeof a.sortOrder==='number')?a.sortOrder:999999;var sb=(typeof b.sortOrder==='number')?b.sortOrder:999999;if(sa!==sb)return sa-sb;return String(a.name||'').localeCompare(String(b.name||''),'ja');});
  return out;}
+// v1.1.1：emailを徹底正規化（全角＠→半角／全角英数→半角／小文字／trim）。Google認証emailとの不一致を防ぐ
+function _normEmail(s){
+ if(typeof s!=='string') return s;
+ // 全角英数記号→半角（NFKC正規化）→小文字→trim
+ return s.normalize('NFKC').toLowerCase().trim();
+}
 async function saveMember(m){var data=JSON.parse(JSON.stringify(m));delete data.id;
- // v1.1.0：emailを小文字＋trimして保存（Googleアカウントとの完全一致を確実にする）
- if(typeof data.email==='string') data.email=data.email.toLowerCase().trim();
+ if(typeof data.email==='string') data.email=_normEmail(data.email);
  await membersCol().doc(m.id).set(data,{merge:true});}
 async function deleteMember(id){await membersCol().doc(id).delete();}
 function makeMasterDoc(user,staff){var nm=(staff&&staff.displayName)||user.displayName||'管理者';return {id:user.uid,uid:user.uid,name:nm,gname:user.displayName||nm,ini:(nm||'？').trim().charAt(0)||'？',color:'#378ADD',photo:(staff&&(staff.customPhotoURL||staff.photoURL))||user.photoURL||null,email:user.email||'',title:'',dept:'',active:true,master:true,admin:true,carflow:{on:true,role:'管理者',group:'（なし）'},stockflow:{on:true,role:'管理'},pitflow:{on:true,role:'管理'}};}
