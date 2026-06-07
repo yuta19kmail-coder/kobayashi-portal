@@ -283,7 +283,12 @@ function wireAuth(){
   if(!user){window.fb.currentUser=null;window.fb.currentStaff=null;window.fb.currentMember=null;showLogin();return;}
   window.fb.currentUser=user;
   var member=await checkAccess(user);
-  if(member){window.fb.currentMember=member;window.fb.currentStaff=member;enterPortal(member,user);}
+  if(member){
+   window.fb.currentMember=member;window.fb.currentStaff=member;
+   // v1.1.3: 本人↔名簿の橋渡しを userPrefs/{uid} に記録（Firestoreルールの“追加判定”用・なりすまし防止つき）
+   try{ await window.fb.db.collection('companies').doc(COMPANY_ID).collection('userPrefs').doc(user.uid).set({memberId:member.id, memberEmail:(member.email||user.email||'')},{merge:true}); }catch(e){ console.warn('[CoreFlow] userPrefs memberId 記録に失敗（処理は継続）:',e); }
+   enterPortal(member,user);
+  }
   else{await window.fb.auth.signOut().catch(function(){});showDenied();}
  });
 }
