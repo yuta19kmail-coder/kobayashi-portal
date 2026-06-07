@@ -61,7 +61,7 @@ body.flooding #flood{}
 .ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:82%;height:82%;border:1px solid rgba(255,255,255,.09);border-radius:50%;transition:opacity .3s}
 #center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:210px;transition:opacity .3s}
 .cname{font-weight:800;font-size:19px;margin-top:8px}.csub{font-size:10px;letter-spacing:4px;color:var(--t2);margin-top:3px}
-.node{position:absolute;transform:translate(-50%,-50%);width:58px;height:58px;cursor:pointer;background:none;border:none;color:inherit;transition:opacity .3s}
+.node{position:absolute;transform:translate(-50%,-50%);width:58px;height:58px;padding:0;box-sizing:border-box;cursor:pointer;background:none;border:none;color:inherit;transition:opacity .3s}
 .node .ic{position:relative;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:27px;transition:transform .2s,box-shadow .2s;background:var(--c)}
 .node .lb{position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);font-size:13px;font-weight:600;white-space:nowrap}
 .node:hover .ic,.node.hot .ic{transform:scale(1.13);box-shadow:0 0 26px var(--c),0 0 64px -2px var(--c)}
@@ -77,6 +77,20 @@ body.flooding .node:not(.hot){opacity:.18}body.flooding #center{opacity:.22}body
 .node .ic::after{content:'';position:absolute;inset:0;border-radius:50%;box-shadow:0 0 34px 7px var(--c);opacity:.5;pointer-events:none;animation:cfBreathe 3.8s ease-in-out infinite}
 .node.soon .ic::after{opacity:.16;animation:none}
 @keyframes cfBreathe{0%,100%{opacity:.38}50%{opacity:.85}}
+/* v1.5.0：選択中（ホバー＝.hot）＝赤一色フラッドの上で、その色の柔らかい光が「ドンッ…ドッ」と脈打って余韻を残す。
+   screen合成でフラッド色よりやや明るく光らせて、同色背景でも選ばれているのが分かる。 */
+.node::before{content:'';position:absolute;left:50%;top:50%;width:170px;height:170px;border-radius:50%;transform:translate(-50%,-50%) scale(.55);background:radial-gradient(circle, var(--c) 0%, var(--c) 16%, transparent 64%);opacity:0;pointer-events:none;mix-blend-mode:screen;filter:blur(4px);z-index:-1}
+.node.hot .ic::after{opacity:0;animation:none}
+.node.hot::before{animation:cfHeart 1.5s ease-in-out infinite}
+@keyframes cfHeart{
+  0%{transform:translate(-50%,-50%) scale(.55);opacity:.35}
+  8%{transform:translate(-50%,-50%) scale(.95);opacity:.95}
+  18%{transform:translate(-50%,-50%) scale(.75);opacity:.5}
+  26%{transform:translate(-50%,-50%) scale(.9);opacity:.85}
+  48%{transform:translate(-50%,-50%) scale(1.2);opacity:.32}
+  78%{transform:translate(-50%,-50%) scale(1.0);opacity:.14}
+  100%{transform:translate(-50%,-50%) scale(.55);opacity:.35}
+}
 /* 登場演出：渦＋ハブ出現＋リング＋着地のグロー膨らみ（intro クラスが付いている間だけ） */
 body.intro #orbitNodes{animation:cfSpin 1.6s cubic-bezier(.16,.74,.2,1) both}
 body.intro #center{animation:cfHub .65s ease-out both}
