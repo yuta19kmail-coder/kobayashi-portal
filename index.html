@@ -58,15 +58,15 @@ body.flooding #flood{}
 /* TOP（エコシステム） */
 #view-top{position:relative;min-height:100vh;min-height:100dvh}
 #stage{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:2;width:min(82vw,84vh,640px);aspect-ratio:1}
-.ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:84%;height:84%;border:1px solid rgba(255,255,255,.09);border-radius:50%;transition:opacity .3s}
+.ring{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:82%;height:82%;border:1px solid rgba(255,255,255,.09);border-radius:50%;transition:opacity .3s}
 #center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:210px;transition:opacity .3s}
 .cname{font-weight:800;font-size:19px;margin-top:8px}.csub{font-size:10px;letter-spacing:4px;color:var(--t2);margin-top:3px}
-.node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;background:none;border:none;color:inherit;width:120px;transition:opacity .3s}
+.node{position:absolute;transform:translate(-50%,-50%);width:58px;height:58px;cursor:pointer;background:none;border:none;color:inherit;transition:opacity .3s}
 .node .ic{position:relative;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:27px;transition:transform .2s,box-shadow .2s;background:var(--c);border:1.5px solid rgba(255,255,255,.20);box-shadow:0 0 16px var(--c),0 0 38px -6px var(--c)}
-.node .lb{font-size:13px;font-weight:600;white-space:nowrap}
+.node .lb{position:absolute;left:50%;top:calc(100% + 8px);transform:translateX(-50%);font-size:13px;font-weight:600;white-space:nowrap}
 .node:hover .ic,.node.hot .ic{transform:scale(1.13);box-shadow:0 0 26px var(--c),0 0 64px -2px var(--c)}
 .node.soon{cursor:default}.node.soon .ic{filter:grayscale(.45);opacity:.85}.node.soon .lb{color:var(--t2)}
-.badge{font-size:10px;color:#cdd3df;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:1px 8px}
+.badge{position:absolute;left:50%;top:calc(100% + 30px);transform:translateX(-50%);font-size:10px;color:#cdd3df;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:1px 8px;white-space:nowrap}
 .shake{animation:shk .4s}@keyframes shk{0%,100%{transform:translate(-50%,-50%)}25%{transform:translate(-54%,-50%)}75%{transform:translate(-46%,-50%)}}
 body.flooding .node:not(.hot){opacity:.18}body.flooding #center{opacity:.22}body.flooding .ring{opacity:0}
 
@@ -124,8 +124,10 @@ th,td{border-bottom:1px solid rgba(255,255,255,.06);padding:9px 8px;text-align:l
   .ring{display:none}#center{position:static;transform:none;width:auto;margin:6px auto 16px}
   #orbitNodes{display:contents}
   body.intro #orbitNodes,body.intro #center,body.intro .ring{animation:none}
-  .node{position:static!important;transform:none!important;flex-direction:row;width:100%;justify-content:flex-start;gap:14px;background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:14px;padding:11px 14px}
+  .node{position:static!important;transform:none!important;display:flex!important;flex-direction:row;align-items:center;width:100%!important;height:auto!important;justify-content:flex-start;gap:14px;background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:14px;padding:11px 14px}
   .node .ic{width:44px;height:44px;font-size:21px}
+  .node .lb{position:static;transform:none;top:auto;left:auto}
+  .badge{position:static;transform:none;top:auto;left:auto;margin-left:auto}
   body.flooding .node:not(.hot){opacity:1}body.flooding #center{opacity:1}
 }
 </style>
@@ -352,7 +354,17 @@ function buildNodes(){
 function floodFrom(node,color,full){
  var r=node.querySelector('.ic').getBoundingClientRect();var cx=r.left+r.width/2,cy=r.top+r.height/2;var W=innerWidth,H=innerHeight;
  var maxD=Math.max(Math.hypot(cx,cy),Math.hypot(W-cx,cy),Math.hypot(cx,H-cy),Math.hypot(W-cx,H-cy));var s=(maxD/85)*1.06;
- var f=$('flood');document.body.style.setProperty('--fc',color);f.style.left=cx+'px';f.style.top=cy+'px';f.style.opacity=full?'1':'.92';f.style.transform='translate(-50%,-50%) scale('+s+')';
+ var f=$('flood');document.body.style.setProperty('--fc',color);
+ // v1.5.0：別アイコンへ移った時も「そのアイコンから新しく広がり直す」。
+ // いったん原点を新アイコンに移して scale0 に戻し（瞬時）、再描画してから広げ直す。
+ f.style.transition='none';
+ f.style.left=cx+'px';f.style.top=cy+'px';
+ f.style.transform='translate(-50%,-50%) scale(0)';f.style.opacity='0';
+ void f.offsetWidth;
+ f.style.transition='';
+ f.style.opacity=full?'1':'.92';f.style.transform='translate(-50%,-50%) scale('+s+')';
+ // 前のホバー中ノードのハイライトは消す（移動先だけ hot に）
+ document.querySelectorAll('.node.hot').forEach(function(n){if(n!==node)n.classList.remove('hot')});
  document.body.classList.add('flooding');node.classList.add('hot');
 }
 function floodOff(node){var f=$('flood');f.style.transform='translate(-50%,-50%) scale(0)';f.style.opacity='0';document.body.classList.remove('flooding');if(node)node.classList.remove('hot');}
