@@ -62,13 +62,30 @@ body.flooding #flood{}
 #center{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;width:210px;transition:opacity .3s}
 .cname{font-weight:800;font-size:19px;margin-top:8px}.csub{font-size:10px;letter-spacing:4px;color:var(--t2);margin-top:3px}
 .node{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;align-items:center;gap:8px;cursor:pointer;background:none;border:none;color:inherit;width:120px;transition:opacity .3s}
-.node .ic{width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:27px;transition:transform .2s,box-shadow .2s;background:var(--c)}
+.node .ic{position:relative;width:58px;height:58px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:27px;transition:transform .2s,box-shadow .2s;background:var(--c);border:1.5px solid rgba(255,255,255,.20);box-shadow:0 0 16px var(--c),0 0 38px -6px var(--c)}
 .node .lb{font-size:13px;font-weight:600;white-space:nowrap}
-.node:hover .ic,.node.hot .ic{transform:scale(1.13);box-shadow:0 0 30px var(--c)}
+.node:hover .ic,.node.hot .ic{transform:scale(1.13);box-shadow:0 0 26px var(--c),0 0 64px -2px var(--c)}
 .node.soon{cursor:default}.node.soon .ic{filter:grayscale(.45);opacity:.85}.node.soon .lb{color:var(--t2)}
 .badge{font-size:10px;color:#cdd3df;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:20px;padding:1px 8px}
 .shake{animation:shk .4s}@keyframes shk{0%,100%{transform:translate(-50%,-50%)}25%{transform:translate(-54%,-50%)}75%{transform:translate(-46%,-50%)}}
 body.flooding .node:not(.hot){opacity:.18}body.flooding #center{opacity:.22}body.flooding .ring{opacity:0}
+
+/* v1.5.0：ノード専用ラッパー（ハブ・リングは固定／ノードだけ渦回転させる） */
+#orbitNodes{position:absolute;inset:0;transform-origin:50% 50%;pointer-events:none}
+#orbitNodes .node{pointer-events:auto}
+/* ゴージャスな二層グロー：::after が広く柔らかいハロー＝常時ゆっくり呼吸 */
+.node .ic::after{content:'';position:absolute;inset:-7px;border-radius:50%;box-shadow:0 0 24px 3px var(--c);opacity:.45;pointer-events:none;animation:cfBreathe 3.8s ease-in-out infinite}
+.node.soon .ic::after{opacity:.18;animation:none}
+@keyframes cfBreathe{0%,100%{opacity:.4}50%{opacity:.72}}
+/* 登場演出：渦＋ハブ出現＋リング＋着地のグロー膨らみ（intro クラスが付いている間だけ） */
+body.intro #orbitNodes{animation:cfSpin 1.6s cubic-bezier(.16,.74,.2,1) both}
+body.intro #center{animation:cfHub .65s ease-out both}
+body.intro .ring{animation:cfRing 1.4s ease .45s both}
+body.intro .node:not(.soon) .ic::after{animation:cfBloom 1.6s ease both,cfBreathe 3.8s ease-in-out 1.7s infinite}
+@keyframes cfSpin{0%{opacity:0;transform:rotate(135deg) scale(.08)}100%{opacity:1;transform:rotate(0) scale(1)}}
+@keyframes cfHub{0%{opacity:0;transform:translate(-50%,-50%) scale(0)}100%{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+@keyframes cfRing{0%{opacity:0}100%{opacity:1}}
+@keyframes cfBloom{0%{opacity:0}80%{opacity:.95}100%{opacity:.45}}
 .foot{position:fixed;bottom:18px;left:0;right:0;text-align:center;font-size:11px;letter-spacing:1.5px;color:var(--t3);z-index:3}
 #enterLabel{position:fixed;inset:0;z-index:4;display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff;pointer-events:none}
 body.entering #enterLabel{display:flex}
@@ -105,6 +122,8 @@ th,td{border-bottom:1px solid rgba(255,255,255,.06);padding:9px 8px;text-align:l
   #view-top{min-height:0}
   #stage{position:static;left:auto;top:auto;transform:none;width:auto;aspect-ratio:auto;margin:64px 16px 16px;display:flex;flex-direction:column;gap:9px}
   .ring{display:none}#center{position:static;transform:none;width:auto;margin:6px auto 16px}
+  #orbitNodes{display:contents}
+  body.intro #orbitNodes,body.intro #center,body.intro .ring{animation:none}
   .node{position:static!important;transform:none!important;flex-direction:row;width:100%;justify-content:flex-start;gap:14px;background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:14px;padding:11px 14px}
   .node .ic{width:44px;height:44px;font-size:21px}
   body.flooding .node:not(.hot){opacity:1}body.flooding #center{opacity:1}
@@ -155,6 +174,7 @@ th,td{border-bottom:1px solid rgba(255,255,255,.06);padding:9px 8px;text-align:l
         </svg>
         <div class="cname">Core<span style="color:var(--t2)">Flow</span></div><div class="csub">KOBAYASHI MOTORS</div>
       </div>
+      <div id="orbitNodes"></div>
     </div>
     <div class="foot">CoreFlow ECOSYSTEM ・ 小林モータース ・ アイコンにホバー → クリックでアプリへ</div>
   </div>
@@ -273,7 +293,7 @@ async function enterPortal(member,user){
  var gear=document.getElementById('gear-admin');
  var canAdmin=!!(member&&(member.admin===true||member.master===true));
  if(gear) gear.style.display=canAdmin?'':'none';
- buildNodes();layout();showView('top');
+ buildNodes();layout();showView('top');playIntro();
  // 名簿シードは admin 権限のある人のときだけ走らせる（一般メンバーは名簿に書けないルール）
  if(canAdmin){ await ensureRoster(user,member); }
 }
@@ -305,26 +325,28 @@ function showView(v){
 // v1.4.0(2026-06-04)：ScheduleFlow→MasterHub Schedule(MHS)に改名（最上級＝全社基準マスター層の第1号）。orbit表示はMHS。
 // v1.3.1(2026-06-04)：CoreBoard/CoreNoteのURLをリポジトリ名どおり大文字に修正。
 // v1.3.0(2026-06-04)：CoreBoard(📋ターコイズ)＋CoreNote(📝ピンク)をorbitに追加。GrowFlow→CoreMembers(👥橙)に改名。
+// v1.5.0(2026-06-07)：並びを「頂点＝MHS→右回り」に確定＋CoreTools(🧰スレート)追加。登場演出（渦＋二層グロー＋呼吸）。
 var APPS=[
+ {key:'mhs',name:'MHS',emoji:'📅',color:'#dc2626',url:'https://yuta19kmail-coder.github.io/mhs/',live:true},
  {key:'carflow',name:'CarFlow',emoji:'🚙',color:'#378ADD',url:'https://carflow.kobayashi-motors.com',live:true},
  {key:'stockflow',name:'StockFlow',emoji:'📦',color:'#7c3aed',url:'https://stockflow.kobayashi-motors.com',live:true},
- {key:'pitflow',name:'PitFlow',emoji:'🔧',color:'#1db97a',url:'https://yuta19kmail-coder.github.io/pitflow/',live:true},
- {key:'mhs',name:'MHS',emoji:'📅',color:'#dc2626',url:'https://yuta19kmail-coder.github.io/mhs/',live:true},
  {key:'coreboard',name:'CoreBoard',emoji:'📋',color:'#06b6d4',url:'https://yuta19kmail-coder.github.io/CoreBoard/',live:true},
  {key:'corenote',name:'CoreNote',emoji:'📝',color:'#ec4899',url:'https://yuta19kmail-coder.github.io/CoreNote/',live:true},
+ {key:'coretools',name:'CoreTools',emoji:'🧰',color:'#64748b',url:'https://yuta19kmail-coder.github.io/CoreTools/',live:true},
+ {key:'coremembers',name:'CoreMembers',emoji:'👥',color:'#ea580c',live:false},
  {key:'moneyflow',name:'MoneyFlow',emoji:'💴',color:'#e0a92b',live:false},
- {key:'coremembers',name:'CoreMembers',emoji:'👥',color:'#ea580c',live:false}
+ {key:'pitflow',name:'PitFlow',emoji:'🔧',color:'#1db97a',url:'https://yuta19kmail-coder.github.io/pitflow/',live:true}
 ];
 var _built=false;
 function buildNodes(){
- if(_built)return;_built=true;var stage=$('stage');
+ if(_built)return;_built=true;var host=document.getElementById('orbitNodes')||$('stage');
  APPS.forEach(function(a){
   var b=document.createElement('button');b.className='node'+(a.live?'':' soon');b.style.setProperty('--c',a.color);
   b.innerHTML='<span class="ic">'+a.emoji+'</span><span class="lb">'+a.name+'</span>'+(a.live?'':'<span class="badge">Coming Soon</span>');
   b.addEventListener('mouseenter',function(){if(a.live)floodFrom(b,a.color,false)});
   b.addEventListener('mouseleave',function(){floodOff(b)});
   b.addEventListener('click',function(){a.live?enterApp(a,b):soon(b)});
-  stage.appendChild(b);
+  host.appendChild(b);
  });
 }
 function floodFrom(node,color,full){
@@ -339,6 +361,8 @@ function resetTop(){document.body.classList.remove('flooding','entering');var f=
 var _tt;function soon(node){node.classList.remove('shake');void node.offsetWidth;node.classList.add('shake');var t=$('toast');t.textContent='🚧 Coming Soon（準備中）';t.classList.add('show');clearTimeout(_tt);_tt=setTimeout(function(){t.classList.remove('show')},1600);}
 function layout(){var n=APPS.length,R=41;document.querySelectorAll('.node').forEach(function(el,i){var ang=(-90+i*(360/n))*Math.PI/180;el.style.left=(50+R*Math.cos(ang))+'%';el.style.top=(50+R*Math.sin(ang))+'%';});}
 window.addEventListener('resize',function(){layout()});
+/* v1.5.0：登場演出（渦＋二層グロー＋呼吸）。ログインしてTOPを開いた時に1回だけ再生。約3.4秒で intro クラスを外して定常状態へ */
+function playIntro(){var b=document.body;b.classList.remove('intro');void b.offsetWidth;b.classList.add('intro');clearTimeout(window._introT);window._introT=setTimeout(function(){b.classList.remove('intro');},3400);}
 
 /* ---------- メンバー管理（試作表示・保存は次段階） ---------- */
 var ROLES={carflow:['管理者','マネージャー','スタッフ','閲覧'],stockflow:['管理','メンバー'],pitflow:['管理','メンバー']};
