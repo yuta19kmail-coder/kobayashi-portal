@@ -74,7 +74,7 @@ body.flooding .node:not(.hot){opacity:.18}body.flooding #center{opacity:.22}body
 #orbitNodes{position:absolute;inset:0;transform-origin:50% 50%;pointer-events:none}
 #orbitNodes .node{pointer-events:auto}
 /* ゴージャスな二層グロー：::after が広く柔らかいハロー＝常時ゆっくり呼吸 */
-.node .ic::after{content:'';position:absolute;inset:-7px;border-radius:50%;box-shadow:0 0 34px 8px var(--c);opacity:.5;pointer-events:none;animation:cfBreathe 3.8s ease-in-out infinite}
+.node .ic::after{content:'';position:absolute;inset:0;border-radius:50%;box-shadow:0 0 34px 7px var(--c);opacity:.5;pointer-events:none;animation:cfBreathe 3.8s ease-in-out infinite}
 .node.soon .ic::after{opacity:.16;animation:none}
 @keyframes cfBreathe{0%,100%{opacity:.38}50%{opacity:.85}}
 /* 登場演出：渦＋ハブ出現＋リング＋着地のグロー膨らみ（intro クラスが付いている間だけ） */
