@@ -3,6 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="app-version" content="1.6.0"><!-- 自動更新の基準（auto-update.js が参照）。リリース毎に上げる -->
 <script>
   // 旧URL（GitHub Pages）からのアクセスを新URL（独自ドメイン）へ自動転送する。
   // github.io から開いた時だけジャンプ。独自ドメイン/.web.app では何もしない。
@@ -483,5 +484,6 @@ window.addEventListener('DOMContentLoaded',function(){ showLogin(); wireAuth(); 
 // ブラウザバック（bfcache復元）で戻った時、アプリ遷移アニメ（◯◯ 開いてます…）の残りを消す
 window.addEventListener('pageshow',function(){ resetTop(); });
 </script>
+<script src="auto-update.js?v=1"></script>
 </body>
 </html>
