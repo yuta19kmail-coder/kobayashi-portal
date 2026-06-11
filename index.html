@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="1.8.0"><!-- 自動更新の基準（auto-update.js が参照）。リリース毎に上げる。TOP右下の版表示もここから自動反映 -->
+<meta name="app-version" content="1.8.1"><!-- 自動更新の基準（auto-update.js が参照）。リリース毎に上げる。TOP右下の版表示もここから自動反映 -->
 <script>
   // 旧URL（GitHub Pages）からのアクセスを新URL（独自ドメイン）へ自動転送する。
   // github.io から開いた時だけジャンプ。独自ドメイン/.web.app では何もしない。
@@ -45,9 +45,10 @@ input,select{font-family:inherit;background:#0e1117;color:var(--t1);border:1px s
 .rg-app h4 .tag{font-size:11px;font-weight:600;padding:1px 8px;border-radius:999px}
 .rg-app h4 .tag.live{background:rgba(29,185,122,.16);color:#5fd6a0}
 .rg-app h4 .tag.todo{background:rgba(224,181,106,.18);color:var(--admin)}
-table.rgt{width:100%;border-collapse:collapse;font-size:12px}
-table.rgt th,table.rgt td{border:1px solid var(--bd);padding:5px 7px;text-align:center}
-table.rgt th{background:var(--sec);color:var(--t2);font-weight:600}
+.rgt-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:6px}
+table.rgt{width:100%;min-width:470px;border-collapse:collapse;font-size:11px}
+table.rgt th,table.rgt td{border:1px solid var(--bd);padding:4px 5px;text-align:center;white-space:nowrap}
+table.rgt th{background:var(--sec);color:var(--t2);font-weight:600;line-height:1.25}
 table.rgt td:first-child,table.rgt th:first-child{text-align:left;white-space:nowrap;font-weight:600;color:var(--t1)}
 table.rgt .ok{color:#5fd6a0;font-weight:700}
 table.rgt .ng{color:var(--t3)}
@@ -244,30 +245,31 @@ th,td{border-bottom:1px solid rgba(255,255,255,.06);padding:9px 8px;text-align:l
 
         <div class="rg-app">
           <h4><span class="dot" style="background:var(--car)"></span>CarFlow <span class="tag live">運用中</span></h4>
-          <table class="rgt">
-            <thead><tr><th>役割</th><th>新規車両<br>登録</th><th>列の<br>移動</th><th>車両情報<br>の編集</th><th>車両の<br>削除</th><th>設定・テンプレ<br>・月締め</th></tr></thead>
+          <div class="rgt-wrap"><table class="rgt">
+            <thead><tr><th>役割</th><th>見る</th><th>大・小タスク<br>のチェック</th><th>新規車両<br>登録</th><th>カードの<br>列移動</th><th>車両情報<br>の編集</th><th>車両の<br>削除</th><th>設定テンプレ<br>月締め</th></tr></thead>
             <tbody>
-              <tr><td>管理者</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td></tr>
-              <tr><td>マネージャー</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td></tr>
-              <tr><td>スタッフ</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ng">×</td><td class="ng">×</td></tr>
-              <tr><td>作業者 ※</td><td class="ng">×</td><td class="ng">×</td><td class="ng">×</td><td class="ng">×</td><td class="ng">×</td></tr>
-              <tr><td>閲覧</td><td class="ng">×</td><td class="ng">×</td><td class="ng">×</td><td class="ng">×</td><td class="ng">×</td></tr>
+              <tr><td>管理者</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td></tr>
+              <tr><td>マネージャー</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td></tr>
+              <tr><td>スタッフ</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ng">×</td><td class="ng">×</td></tr>
+              <tr><td>作業者</td><td class="ok">○</td><td class="ok">○</td><td class="ng">×</td><td class="ng">×</td><td class="ng">×</td><td class="ng">×</td><td class="ng">×</td></tr>
+              <tr><td>閲覧</td><td class="ok">○</td><td class="ng">×</td><td class="ng">×</td><td class="ng">×</td><td class="ng">×</td><td class="ng">×</td><td class="ng">×</td></tr>
             </tbody>
-          </table>
+          </table></div>
           <div class="rg-note">
-            「作業者」＝<b>大タスク・小タスクのチェックだけ</b>できる役割（新規車両登録・カードの列移動・車両情報の編集はすべて不可）。「閲覧」＝見るだけ。
+            <b>作業者</b>＝見る＋<b>大タスク・小タスクのチェックだけ</b>（新規登録・列移動・車両編集・削除・設定はすべて不可）。<br>
+            <b>閲覧</b>＝<b>見るだけ</b>（チェックも入れられない）。違いは「タスクのチェックができるか」です。
           </div>
         </div>
 
         <div class="rg-app">
           <h4><span class="dot" style="background:var(--stock)"></span>StockFlow <span class="tag live">運用中</span></h4>
-          <table class="rgt">
-            <thead><tr><th>役割</th><th>商品・在庫・取引先<br>・案件の編集</th><th>入出庫履歴の<br>修正・削除</th><th>操作ログ<br>の削除</th></tr></thead>
+          <div class="rgt-wrap"><table class="rgt">
+            <thead><tr><th>役割</th><th>見る</th><th>商品・在庫・取引先<br>・案件の編集</th><th>入出庫履歴の<br>修正・削除</th><th>操作ログ<br>の削除</th></tr></thead>
             <tbody>
-              <tr><td>管理</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td></tr>
-              <tr><td>メンバー</td><td class="ok">○</td><td class="ng">×</td><td class="ng">×</td></tr>
+              <tr><td>管理</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td><td class="ok">○</td></tr>
+              <tr><td>メンバー</td><td class="ok">○</td><td class="ok">○</td><td class="ng">×</td><td class="ng">×</td></tr>
             </tbody>
-          </table>
+          </table></div>
           <div class="rg-note">「メンバー」も日常の在庫操作・入出庫・見積などは普通にできます。過去履歴の修正やログ削除だけ「管理」専用です。</div>
         </div>
 
