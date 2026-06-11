@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="1.7.1"><!-- 自動更新の基準（auto-update.js が参照）。リリース毎に上げる -->
+<meta name="app-version" content="1.8.0"><!-- 自動更新の基準（auto-update.js が参照）。リリース毎に上げる。TOP右下の版表示もここから自動反映 -->
 <script>
   // 旧URL（GitHub Pages）からのアクセスを新URL（独自ドメイン）へ自動転送する。
   // github.io から開いた時だけジャンプ。独自ドメイン/.web.app では何もしない。
@@ -133,7 +133,11 @@ body.entering #enterLabel{display:flex}
 #toast.show{opacity:1}
 
 /* メンバー管理ビュー */
-#view-admin{display:none;max-width:920px;margin:0 auto;padding:64px 16px 60px}
+#view-admin{display:none;max-width:1240px;margin:0 auto;padding:64px 16px 60px}
+/* 左＝実際のスタッフ／右＝役割と権限の早見表 の2カラム */
+.admin-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,0.85fr);gap:20px;align-items:start}
+.admin-right{position:sticky;top:64px}
+@media (max-width:960px){.admin-grid{grid-template-columns:1fr}.admin-right{position:static}}
 .av{border-radius:50%;background:var(--selrow);color:#cdd6f4;display:flex;align-items:center;justify-content:center;font-weight:600;flex:none}
 .av img{width:100%;height:100%;object-fit:cover;display:block}
 .card{background:var(--card);border:1px solid var(--bd);border-radius:14px}
@@ -216,21 +220,25 @@ th,td{border-bottom:1px solid rgba(255,255,255,.06);padding:9px 8px;text-align:l
       </div>
       <div id="orbitNodes"></div>
     </div>
-    <div class="foot">CoreFlow ECOSYSTEM ・ 小林モータース ・ アイコンにホバー → クリックでアプリへ</div>
+    <div class="foot">CoreFlow ECOSYSTEM ・ 小林モータース ・ <span id="foot-ver"></span></div>
   </div>
 
   <div id="view-admin">
     <button class="backlink" onclick="showView('top')">‹ CoreFlow TOPに戻る</button>
     <div class="banner">メンバーと権限はここで一元管理します。変更したら「保存」を押してください（各アプリはこの設定を読みます）。</div>
-    <div class="sectitle"><span style="font-weight:700">👥 メンバー管理</span><span class="ter" style="font-size:12px">人と権限はすべてここで設定</span><span style="flex:1"></span><button class="addbtn" onclick="addMember()">＋ 追加</button></div>
-    <table>
-      <colgroup><col style="width:40%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
-      <thead><tr class="sub" style="font-size:12px"><th>メンバー</th><th>CarFlow</th><th>StockFlow</th><th>PitFlow</th></tr></thead>
-      <tbody id="roster"></tbody>
-    </table>
-    <div id="editor" style="margin-top:14px"></div>
+    <div class="admin-grid">
+     <div class="admin-left">
+      <div class="sectitle"><span style="font-weight:700">👥 メンバー管理</span><span class="ter" style="font-size:12px">人と権限はすべてここで設定</span><span style="flex:1"></span><button class="addbtn" onclick="addMember()">＋ 追加</button></div>
+      <table>
+        <colgroup><col style="width:40%"><col style="width:20%"><col style="width:20%"><col style="width:20%"></colgroup>
+        <thead><tr class="sub" style="font-size:12px"><th>メンバー</th><th>CarFlow</th><th>StockFlow</th><th>PitFlow</th></tr></thead>
+        <tbody id="roster"></tbody>
+      </table>
+      <div id="editor" style="margin-top:14px"></div>
+     </div>
 
-    <details class="rg">
+     <aside class="admin-right">
+      <details class="rg" open>
       <summary>📖 役割と権限の早見表 <span class="ter" style="font-size:12px;font-weight:400">（各アプリで役割ごとに何ができるか）</span><span class="chev">▸</span></summary>
       <div class="rg-body">
 
@@ -274,7 +282,9 @@ th,td{border-bottom:1px solid rgba(255,255,255,.06);padding:9px 8px;text-align:l
         </div>
 
       </div>
-    </details>
+      </details>
+     </aside>
+    </div>
   </div>
 </div>
 
@@ -302,6 +312,8 @@ th,td{border-bottom:1px solid rgba(255,255,255,.06);padding:9px 8px;text-align:l
 <script>
 var COMPANY_ID='kobayashi_motors';
 function $(id){return document.getElementById(id)}
+// TOP右下のバージョン表示を app-version メタから自動反映（リリース毎にメタを上げれば一緒に上がる）
+(function(){try{var m=document.querySelector('meta[name="app-version"]');var v=m&&m.getAttribute('content');var el=document.getElementById('foot-ver');if(el&&v)el.textContent='v'+v;}catch(e){}})();
 function show(el,on){$(el).style.display=on?'':'none'}
 
 /* ---------- 認証 ---------- */
