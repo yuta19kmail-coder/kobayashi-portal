@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<meta name="app-version" content="1.8.3"><!-- 自動更新の基準（auto-update.js が参照）。リリース毎に上げる。TOP右下の版表示もここから自動反映 -->
+<meta name="app-version" content="1.8.4"><!-- 自動更新の基準（auto-update.js が参照）。リリース毎に上げる。TOP右下の版表示もここから自動反映 -->
 <script>
   // 旧URL（GitHub Pages）からのアクセスを新URL（独自ドメイン）へ自動転送する。
   // github.io から開いた時だけジャンプ。独自ドメイン/.web.app では何もしない。
@@ -231,8 +231,8 @@ th,td{border-bottom:1px solid rgba(255,255,255,.06);padding:9px 8px;text-align:l
      <div class="admin-left">
       <div class="sectitle"><span style="font-weight:700">👥 メンバー管理</span><span class="ter" style="font-size:12px">人と権限はすべてここで設定</span><span style="flex:1"></span><button class="addbtn" onclick="addMember()">＋ 追加</button></div>
       <table>
-        <colgroup><col style="width:34%"><col style="width:18%"><col style="width:18%"><col style="width:18%"><col style="width:12%"></colgroup>
-        <thead><tr class="sub" style="font-size:12px"><th>メンバー</th><th>CarFlow</th><th>StockFlow</th><th>PitFlow</th><th>MHS</th></tr></thead>
+        <colgroup><col style="width:28%"><col style="width:15%"><col style="width:15%"><col style="width:15%"><col style="width:13%"><col style="width:14%"></colgroup>
+        <thead><tr class="sub" style="font-size:12px"><th>メンバー</th><th>CarFlow</th><th>StockFlow</th><th>PitFlow</th><th>MHS</th><th>CoreMembers</th></tr></thead>
         <tbody id="roster"></tbody>
       </table>
       <div id="editor" style="margin-top:14px"></div>
@@ -281,6 +281,20 @@ th,td{border-bottom:1px solid rgba(255,255,255,.06);padding:9px 8px;text-align:l
         <div class="rg-app">
           <h4><span class="dot" style="background:#dc2626"></span>MHS <span class="tag live">運用中</span></h4>
           <div class="rg-todo">役割の区別はありません（入れる人は全員「利用」＝同じ操作）。表の「MHS」または編集画面の「使える」を<b>OFF</b>にすると、そのメンバーのMHSアクセスを止められます（既定は<b>ON</b>）。社内予定の編集・会社カレンダー設定はメンバー共通です。</div>
+        </div>
+
+        <div class="rg-app">
+          <h4><span class="dot" style="background:#ea580c"></span>CoreMembers <span class="tag live">運用中</span></h4>
+          <div class="rgt-wrap"><table class="rgt">
+            <thead><tr><th>役割</th><th>名簿/組織/<br>場所/スキル編集</th><th>指導履歴の閲覧<br>（Phase4で発動）</th></tr></thead>
+            <tbody>
+              <tr><td>オーナー</td><td class="ok">○ 全部＋権限付与</td><td class="ok">全員</td></tr>
+              <tr><td>管理者</td><td class="ok">○（場所/運転スキル/組織/雇用）</td><td class="ok">全員（要相談）</td></tr>
+              <tr><td>責任者</td><td class="ng">×（自部下のみ※今後）</td><td class="ok">自分＋部下＋同格</td></tr>
+              <tr><td>一般</td><td class="ng">×（自分の基本のみ※今後）</td><td class="ok">自分の横断のみ</td></tr>
+            </tbody>
+          </table></div>
+          <div class="rg-note">いまのPhase1で実際に効くのは<b>編集権限の段</b>（オーナー/管理者＝編集可／責任者・一般＝閲覧）。<b>指導履歴の閲覧スコープ</b>は定義のみで、人物Memory（Phase4）実装時に発動します（プライバシー運用ルールとセット）。</div>
         </div>
 
         <div class="rg-app">
@@ -480,15 +494,15 @@ window.addEventListener('resize',function(){layout()});
 function playIntro(){var b=document.body;b.classList.remove('intro');void b.offsetWidth;b.classList.add('intro');clearTimeout(window._introT);window._introT=setTimeout(function(){b.classList.remove('intro');},3400);}
 
 /* ---------- メンバー管理（試作表示・保存は次段階） ---------- */
-var ROLES={carflow:['管理者','マネージャー','スタッフ','作業者','閲覧'],stockflow:['管理','メンバー'],pitflow:['管理','メンバー'],mhs:['利用']};
+var ROLES={carflow:['管理者','マネージャー','スタッフ','作業者','閲覧'],stockflow:['管理','メンバー'],pitflow:['管理','メンバー'],mhs:['利用'],coremembers:['オーナー','管理者','責任者','一般']};
 var GROUPS=['車販メンバー','他部署メンバー','（なし）'];
-var AC={carflow:'#378ADD',stockflow:'#7c3aed',pitflow:'#1db97a',mhs:'#dc2626'},AN={carflow:'CarFlow',stockflow:'StockFlow',pitflow:'PitFlow',mhs:'MHS'};
+var AC={carflow:'#378ADD',stockflow:'#7c3aed',pitflow:'#1db97a',mhs:'#dc2626',coremembers:'#ea580c'},AN={carflow:'CarFlow',stockflow:'StockFlow',pitflow:'PitFlow',mhs:'MHS',coremembers:'CoreMembers'};
 var DATA=[];   // 本番：名簿はFirestore(portalMembers)から読み込む。サンプル投入なし。
 var SEL=null,NEWN=0;
 function get(){return DATA.find(function(p){return p.id===SEL})}
 /* ---------- 名簿の保存（Firestore: portalMembers） ---------- */
 function membersCol(){return window.fb.db.collection('companies').doc(COMPANY_ID).collection('portalMembers');}
-async function loadMembers(){var snap=await membersCol().get();var out=[];snap.forEach(function(d){var m=d.data();m.id=d.id;if(!m.mhs)m.mhs={on:true,role:'利用'};out.push(m);});
+async function loadMembers(){var snap=await membersCol().get();var out=[];snap.forEach(function(d){var m=d.data();m.id=d.id;if(!m.mhs)m.mhs={on:true,role:'利用'};if(!m.coremembers)m.coremembers={on:true,role:(m.master||m.admin)?'オーナー':'一般'};out.push(m);});
  out.sort(function(a,b){var sa=(typeof a.sortOrder==='number')?a.sortOrder:999999;var sb=(typeof b.sortOrder==='number')?b.sortOrder:999999;if(sa!==sb)return sa-sb;return String(a.name||'').localeCompare(String(b.name||''),'ja');});
  return out;}
 // v1.1.1：emailを徹底正規化（全角＠→半角／全角英数→半角／小文字／trim）。Google認証emailとの不一致を防ぐ
@@ -501,7 +515,7 @@ async function saveMember(m){var data=JSON.parse(JSON.stringify(m));delete data.
  if(typeof data.email==='string') data.email=_normEmail(data.email);
  await membersCol().doc(m.id).set(data,{merge:true});}
 async function deleteMember(id){await membersCol().doc(id).delete();}
-function makeMasterDoc(user,staff){var nm=(staff&&staff.displayName)||user.displayName||'管理者';return {id:user.uid,uid:user.uid,name:nm,gname:user.displayName||nm,ini:(nm||'？').trim().charAt(0)||'？',color:'#378ADD',photo:(staff&&(staff.customPhotoURL||staff.photoURL))||user.photoURL||null,email:user.email||'',title:'',dept:'',active:true,master:true,admin:true,carflow:{on:true,role:'管理者',group:'（なし）'},stockflow:{on:true,role:'管理'},pitflow:{on:true,role:'管理'},mhs:{on:true,role:'利用'}};}
+function makeMasterDoc(user,staff){var nm=(staff&&staff.displayName)||user.displayName||'管理者';return {id:user.uid,uid:user.uid,name:nm,gname:user.displayName||nm,ini:(nm||'？').trim().charAt(0)||'？',color:'#378ADD',photo:(staff&&(staff.customPhotoURL||staff.photoURL))||user.photoURL||null,email:user.email||'',title:'',dept:'',active:true,master:true,admin:true,carflow:{on:true,role:'管理者',group:'（なし）'},stockflow:{on:true,role:'管理'},pitflow:{on:true,role:'管理'},mhs:{on:true,role:'利用'},coremembers:{on:true,role:'オーナー'}};}
 async function ensureRoster(user,staff){
  try{var list=await loadMembers();
   if(!list.length){var me=makeMasterDoc(user,staff);await saveMember(me);list=[me];}
@@ -530,14 +544,14 @@ function avatarHTML(p,sz){sz=sz||32;if(p.photo)return '<span class="av" style="w
 function pill(app,a){if(!a||!a.on)return '<span style="display:inline-flex;align-items:center;gap:6px;color:var(--t3);font-size:13px"><span class="dot" style="background:#3a3f4b"></span>—</span>';var g=(app==='carflow'&&a.group&&a.group!=='（なし）')?'<div class="ter" style="font-size:11px;margin:2px 0 0 16px">'+a.group+'</div>':'';return '<span style="display:inline-flex;align-items:center;gap:6px;font-size:13px"><span class="dot" style="background:'+AC[app]+'"></span>'+a.role+'</span>'+g;}
 function renderTable(){
  $('roster').innerHTML=DATA.map(function(p){var shield=p.admin?' <span title="メンバー管理に入れる（管理者）" style="color:var(--admin)">🛡</span>':'';
-  return '<tr class="row '+(p.id===SEL?'sel':'')+'" onclick="selectPerson(\''+p.id+'\')"><td><div style="display:flex;align-items:center;gap:8px"><div style="display:flex;flex-direction:column;gap:1px;flex:none">'+ordBtns(p)+'</div>'+avatarHTML(p,32)+'<div style="min-width:0"><div style="font-size:14px">'+p.name+shield+(p.active?'':' <span class="ter" style="font-size:11px">(無効)</span>')+'</div><div class="sub" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+([p.title,p.dept].filter(Boolean).join(' ・ ')||'—')+'</div></div></div></td><td>'+pill('carflow',p.carflow)+'</td><td>'+pill('stockflow',p.stockflow)+'</td><td>'+pill('pitflow',p.pitflow)+'</td><td>'+pill('mhs',p.mhs)+'</td></tr>';
+  return '<tr class="row '+(p.id===SEL?'sel':'')+'" onclick="selectPerson(\''+p.id+'\')"><td><div style="display:flex;align-items:center;gap:8px"><div style="display:flex;flex-direction:column;gap:1px;flex:none">'+ordBtns(p)+'</div>'+avatarHTML(p,32)+'<div style="min-width:0"><div style="font-size:14px">'+p.name+shield+(p.active?'':' <span class="ter" style="font-size:11px">(無効)</span>')+'</div><div class="sub" style="font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+([p.title,p.dept].filter(Boolean).join(' ・ ')||'—')+'</div></div></div></td><td>'+pill('carflow',p.carflow)+'</td><td>'+pill('stockflow',p.stockflow)+'</td><td>'+pill('pitflow',p.pitflow)+'</td><td>'+pill('mhs',p.mhs)+'</td><td>'+pill('coremembers',p.coremembers)+'</td></tr>';
  }).join('');
 }
 function appCard(app){var p=get(),a=p[app],on=a.on,lock=!!p.master;var ro=ROLES[app].map(function(r){return '<option '+(r===a.role?'selected':'')+'>'+r+'</option>'}).join('');var grp='';if(app==='carflow'){var go=GROUPS.map(function(g){return '<option '+(g===a.group?'selected':'')+'>'+g+'</option>'}).join('');grp='<label class="lbl" style="margin-top:8px">グループ <span class="ter">（CarFlow専用）</span></label><select onchange="setGroup(this.value)" '+(on?'':'disabled')+'>'+go+'</select>';}var fixed=lock?' <span class="ter" style="font-size:11px;font-weight:400">（固定）</span>':'';return '<div class="sec" style="'+(on?'':'opacity:.5')+'"><div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span class="dot" style="background:'+AC[app]+'"></span><span style="font-weight:600;flex:1">'+AN[app]+fixed+'</span><label style="font-size:12px;display:inline-flex;align-items:center;gap:5px"><input type="checkbox" style="width:auto" '+(on?'checked':'')+' '+(lock?'disabled':'')+' onchange="toggleApp(\''+app+'\',this.checked)"> 使える</label></div><label class="lbl">役割</label><select onchange="setRole(\''+app+'\',this.value)" '+((on&&!lock)?'':'disabled')+'>'+ro+'</select>'+grp+'</div>';}
 function renderEditor(){var p=get();
  if(!p){$('editor').innerHTML='<div class="ter" style="padding:16px">名簿がまだありません。「＋ 追加」から登録できます。</div>';return;}
  var adminRow=p.master?'<div class="sec" style="display:flex;align-items:center;gap:8px;margin:12px 0;border:1px solid rgba(224,181,106,.35)"><span style="color:var(--admin)">🛡</span><span style="font-size:13px">全アプリ管理者・マスター（固定）</span><span class="ter" style="font-size:12px;margin-left:auto">最上位権限。誤操作で変わらないよう固定</span></div>':'<label class="sec" style="display:flex;align-items:center;gap:8px;margin:12px 0;cursor:pointer"><input type="checkbox" style="width:auto" '+(p.admin?'checked':'')+' onchange="toggleAdmin(this.checked)"><span style="font-size:13px"><span style="color:var(--admin);margin-right:5px">👥</span>このメンバーを「メンバー管理」に入れる（管理者にする）</span></label>';
- $('editor').innerHTML='<div class="card" style="padding:16px"><div style="display:flex;align-items:flex-start;gap:14px"><div style="flex:none;text-align:center">'+avatarHTML(p,64)+'<div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;align-items:center"><button class="addbtn" style="font-size:11px" onclick="document.getElementById(\'crop-file\').click()">📷 写真を変更</button>'+(p.photo?'<button class="tbtn" style="font-size:11px;padding:3px 8px" onclick="removePhoto()">削除</button>':'')+'</div><input type="file" id="crop-file" accept="image/*" onchange="onAvatarFile(this)" style="display:none"></div><div style="flex:1;min-width:0"><label class="lbl">表示名（全アプリ共通）</label><input value="'+esc(p.name)+'" oninput="setName(this.value)" style="font-size:15px"><div class="ter" style="font-size:11px;margin-top:4px;line-height:1.5">Googleアカウント名：'+esc(p.gname)+'（自動取得）。表示名とアイコンは、ここの設定を <b>CarFlow含む全アプリに反映</b>します。</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><div><label class="lbl">役職</label><input value="'+esc(p.title)+'" oninput="setTitle(this.value)" placeholder="例：工場長"></div><div><label class="lbl">所属部署</label><input value="'+esc(p.dept)+'" oninput="setDept(this.value)" placeholder="例：車販"></div></div><div style="display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:8px;align-items:end"><div><label class="lbl">メール</label><input value="'+esc(p.email)+'" oninput="setEmail(this.value)" placeholder="メールアドレス"></div><label style="font-size:12px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding-bottom:8px"><input type="checkbox" style="width:auto" '+(p.active?'checked':'')+' '+(p.master?'disabled':'')+' onchange="toggleActive(this.checked)"> 在籍中'+(p.master?'（固定）':'')+'</label></div></div></div>'+adminRow+'<div class="sub" style="font-size:12px;margin-bottom:8px">入れるアプリと役割（細かい権限は後で追加）</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">'+appCard('carflow')+appCard('stockflow')+appCard('pitflow')+appCard('mhs')+'</div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="delbtn"'+(p.master?' disabled style="opacity:.4;cursor:default"':' onclick="delCurrent()"')+'>🗑 削除</button><button class="savebtn" onclick="saveCurrent()">💾 保存</button></div></div>';
+ $('editor').innerHTML='<div class="card" style="padding:16px"><div style="display:flex;align-items:flex-start;gap:14px"><div style="flex:none;text-align:center">'+avatarHTML(p,64)+'<div style="margin-top:8px;display:flex;flex-direction:column;gap:4px;align-items:center"><button class="addbtn" style="font-size:11px" onclick="document.getElementById(\'crop-file\').click()">📷 写真を変更</button>'+(p.photo?'<button class="tbtn" style="font-size:11px;padding:3px 8px" onclick="removePhoto()">削除</button>':'')+'</div><input type="file" id="crop-file" accept="image/*" onchange="onAvatarFile(this)" style="display:none"></div><div style="flex:1;min-width:0"><label class="lbl">表示名（全アプリ共通）</label><input value="'+esc(p.name)+'" oninput="setName(this.value)" style="font-size:15px"><div class="ter" style="font-size:11px;margin-top:4px;line-height:1.5">Googleアカウント名：'+esc(p.gname)+'（自動取得）。表示名とアイコンは、ここの設定を <b>CarFlow含む全アプリに反映</b>します。</div><div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px"><div><label class="lbl">役職</label><input value="'+esc(p.title)+'" oninput="setTitle(this.value)" placeholder="例：工場長"></div><div><label class="lbl">所属部署</label><input value="'+esc(p.dept)+'" oninput="setDept(this.value)" placeholder="例：車販"></div></div><div style="display:grid;grid-template-columns:1fr auto;gap:10px;margin-top:8px;align-items:end"><div><label class="lbl">メール</label><input value="'+esc(p.email)+'" oninput="setEmail(this.value)" placeholder="メールアドレス"></div><label style="font-size:12px;display:inline-flex;align-items:center;gap:5px;white-space:nowrap;padding-bottom:8px"><input type="checkbox" style="width:auto" '+(p.active?'checked':'')+' '+(p.master?'disabled':'')+' onchange="toggleActive(this.checked)"> 在籍中'+(p.master?'（固定）':'')+'</label></div></div></div>'+adminRow+'<div class="sub" style="font-size:12px;margin-bottom:8px">入れるアプリと役割（細かい権限は後で追加）</div><div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px">'+appCard('carflow')+appCard('stockflow')+appCard('pitflow')+appCard('mhs')+appCard('coremembers')+'</div><div style="display:flex;justify-content:flex-end;gap:8px;margin-top:14px"><button class="delbtn"'+(p.master?' disabled style="opacity:.4;cursor:default"':' onclick="delCurrent()"')+'>🗑 削除</button><button class="savebtn" onclick="saveCurrent()">💾 保存</button></div></div>';
 }
 function rr(){renderTable();renderEditor();}
 function selectPerson(id){SEL=id;rr();}
@@ -554,7 +568,7 @@ function setEmail(v){get().email=v;renderTable();}
 function setTitle(v){get().title=v;renderTable();}
 function setDept(v){get().dept=v;renderTable();}
 function toggleActive(v){var p=get();if(p.master){renderEditor();return;}p.active=v;renderTable();}
-function addMember(){var id=membersCol().doc().id;DATA.push({id:id,name:'新しいメンバー',gname:'（ログイン時に取得）',ini:'新',color:'#5fb3c7',email:'',title:'',dept:'',active:true,admin:false,carflow:{on:false,role:'スタッフ',group:'（なし）'},stockflow:{on:false,role:'メンバー'},pitflow:{on:false,role:'メンバー'},mhs:{on:true,role:'利用'}});SEL=id;rr();}
+function addMember(){var id=membersCol().doc().id;DATA.push({id:id,name:'新しいメンバー',gname:'（ログイン時に取得）',ini:'新',color:'#5fb3c7',email:'',title:'',dept:'',active:true,admin:false,carflow:{on:false,role:'スタッフ',group:'（なし）'},stockflow:{on:false,role:'メンバー'},pitflow:{on:false,role:'メンバー'},mhs:{on:true,role:'利用'},coremembers:{on:true,role:'一般'}});SEL=id;rr();}
 
 /* ---------- アイコン円形クロッパー（CarFlow から移植） ---------- */
 function onAvatarFile(input){var f=input.files&&input.files[0];if(!f)return;openCrop(f,function(dataUrl){get().photo=dataUrl;rr();});input.value='';}
