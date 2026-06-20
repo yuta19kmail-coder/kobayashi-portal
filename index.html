@@ -496,7 +496,7 @@ window.addEventListener('resize',function(){layout()});
 function playIntro(){var b=document.body;b.classList.remove('intro');void b.offsetWidth;b.classList.add('intro');clearTimeout(window._introT);window._introT=setTimeout(function(){b.classList.remove('intro');},3400);}
 
 /* ---------- メンバー管理（試作表示・保存は次段階） ---------- */
-var ROLES={carflow:['管理者','マネージャー','スタッフ','作業者','閲覧'],stockflow:['管理','メンバー'],pitflow:['管理','メンバー'],mhs:['利用'],coremembers:['オーナー','管理者','責任者','一般']};
+var ROLES={carflow:['管理者','マネージャー','スタッフ','作業者','閲覧'],stockflow:['管理','メンバー'],pitflow:['管理','メンバー'],mhs:['利用'],coremembers:['オーナー','管理者','幹部','部署管理者','上長','一般']};
 var GROUPS=['車販メンバー','他部署メンバー','（なし）'];
 var AC={carflow:'#378ADD',stockflow:'#7c3aed',pitflow:'#1db97a',mhs:'#dc2626',coremembers:'#ea580c'},AN={carflow:'CarFlow',stockflow:'StockFlow',pitflow:'PitFlow',mhs:'MHS',coremembers:'CoreMembers'};
 var DATA=[];   // 本番：名簿はFirestore(portalMembers)から読み込む。サンプル投入なし。
